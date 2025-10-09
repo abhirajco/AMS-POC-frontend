@@ -23,13 +23,16 @@ export const PlannerPage = ({
   isTaskDialogOpen,
   setIsTaskDialogOpen
 }: PlannerPageProps) => {
-  // Calculate task metrics - need to use 'done' instead of 'completed' based on mockData
+  // Local task state so drag-and-drop updates re-render instantly
+  const [tasks, setTasks] = useState(mockTasks);
+
+  // Calculate task metrics - use local tasks state
   const taskMetrics = {
-    total: mockTasks.length,
-    todo: mockTasks.filter(task => task.status === 'todo').length,
-    inProgress: mockTasks.filter(task => task.status === 'in-progress').length,
-    inReview: mockTasks.filter(task => task.status === 'in-review').length,
-    completed: mockTasks.filter(task => task.status === 'done').length
+    total: tasks.length,
+    todo: tasks.filter(task => task.status === 'todo').length,
+    inProgress: tasks.filter(task => task.status === 'in-progress').length,
+    inReview: tasks.filter(task => task.status === 'in-review').length,
+    completed: tasks.filter(task => task.status === 'done').length
   };
 
   // Local filter/search state
@@ -63,7 +66,7 @@ export const PlannerPage = ({
 
   const filteredTasks = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    return mockTasks.filter(task => {
+    return tasks.filter(task => {
       if (selectedType !== 'all') {
         const categories = typeToCategories[selectedType] || [];
         const category = (task.category || '').toLowerCase();
@@ -93,7 +96,7 @@ export const PlannerPage = ({
       }
       return true;
     });
-  }, [searchQuery, selectedType, selectedStatus, selectedPriority, selectedAssignee, selectedQuarter, typeToCategories]);
+  }, [tasks, searchQuery, selectedType, selectedStatus, selectedPriority, selectedAssignee, selectedQuarter, typeToCategories]);
 
   // Month navigation for the header control
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
@@ -121,7 +124,7 @@ export const PlannerPage = ({
   const handleTaskClick = (taskId: number) => {
     setSelectedTaskId(taskId);
     setIsTaskDetailOpen(true);
-    const src = filteredTasks.find(t => t.id === taskId) || mockTasks.find(t => t.id === taskId);
+    const src = filteredTasks.find(t => t.id === taskId) || tasks.find(t => t.id === taskId);
     if (src) {
       setEditEstimatedHours(src.estimatedHours || 0);
       setEditCompletedHours(src.completedHours || 0);
@@ -240,7 +243,7 @@ export const PlannerPage = ({
 
             {/* Assignee Filter */}
             {(() => {
-              const assigneeOptions = Array.from(new Set((mockTasks || [])
+              const assigneeOptions = Array.from(new Set((tasks || [])
                 .map(t => t.assignedTo && t.assignedTo.name)
                 .filter((n): n is string => Boolean(n)))).sort();
               return (
@@ -310,7 +313,16 @@ export const PlannerPage = ({
         <div className="bg-gray-200 bg-opacity-40 rounded-lg p-4 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {['To do', 'In Progress', 'In Review', 'Completed'].map((column) => (
-              <div key={column} className="space-y-4">
+              <div key={column} className="space-y-4"
+                   onDragOver={(e) => e.preventDefault()}
+                   onDrop={(e) => {
+                     const idStr = e.dataTransfer.getData('text/plain');
+                     const id = Number(idStr);
+                     if (!id) return;
+                     const newStatus = column === 'To do' ? 'todo' : column === 'In Progress' ? 'in-progress' : column === 'In Review' ? 'in-review' : 'done';
+                     setTasks(prev => prev.map(t => t.id === id ? { ...t, status: newStatus as any } : t));
+                     import('sonner').then(({ toast }) => toast.success('Task moved to ' + column));
+                   }}>
                 <h4 className="font-semibold text-[11px] sm:text-[12px] text-black">{column}</h4>
                 <div className="space-y-3 sm:space-y-4">
                    {filteredTasks
@@ -322,7 +334,13 @@ export const PlannerPage = ({
                       return false;
                     })
                     .map((task) => (
-                      <Card key={task.id} className="bg-white border border-gray-300 p-3 sm:p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleTaskClick(task.id)}>
+                      <Card key={task.id}
+                        className="bg-white border border-gray-300 p-3 sm:p-4 hover:shadow-md transition-shadow cursor-pointer"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', String(task.id));
+                        }}
+                        onClick={() => handleTaskClick(task.id)}>
                         <CardContent className="p-0">
                           <div className="space-y-2 sm:space-y-3">
                             <div className="flex items-start gap-2">
@@ -488,7 +506,7 @@ export const PlannerPage = ({
       <Dialog open={isTaskDetailOpen} onOpenChange={setIsTaskDetailOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-2xl bg-white mx-4 max-h-[90vh] overflow-y-auto">
           {selectedTaskId && (() => {
-            const task = filteredTasks.find(t => t.id === selectedTaskId) || mockTasks.find(t => t.id === selectedTaskId);
+            const task = filteredTasks.find(t => t.id === selectedTaskId) || tasks.find(t => t.id === selectedTaskId);
             if (!task) return null;
             return (
               <div className="space-y-4">
