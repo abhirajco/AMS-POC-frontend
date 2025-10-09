@@ -392,9 +392,29 @@ export const EventHubPage = ({
                 {/* Calendar Grid */}
                 <div className="grid grid-cols-7 gap-2">
                   {calendarDays.map((day, index) => (
-                    <div key={index} className={`min-h-[80px] p-2 rounded-lg border ${
-                      day ? 'bg-white border-gray-200' : 'bg-transparent'
-                    }`}>
+                    <div
+                      key={index}
+                      className={`min-h-[80px] p-2 rounded-lg border ${
+                        day ? 'bg-white border-gray-200' : 'bg-transparent'
+                      }`}
+                      onDragOver={(e) => {
+                        if (day) e.preventDefault();
+                      }}
+                      onDrop={(e) => {
+                        if (!day) return;
+                        const idStr = e.dataTransfer.getData('text/plain');
+                        const id = Number(idStr);
+                        if (!id) return;
+                        const targetDate = day.date;
+                        const yyyy = targetDate.getFullYear();
+                        const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+                        const dd = String(targetDate.getDate()).padStart(2, '0');
+                        const iso = `${yyyy}-${mm}-${dd}`;
+                        const display = `${dd}-${mm}-${yyyy}`;
+                        setEvents(prev => prev.map(ev => ev.id === id ? { ...ev, date: iso, eventDate: display } : ev));
+                        import('sonner').then(({ toast }) => toast.success('Event date updated'));
+                      }}
+                    >
                       {day && (
                         <>
                           <div className={`text-center mb-2 ${day.isToday ? 'font-semibold text-blue-600' : 'text-gray-900'}`}>
@@ -405,6 +425,10 @@ export const EventHubPage = ({
                               <div
                                 key={event.id}
                                 className="flex items-center gap-1 cursor-pointer"
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData('text/plain', String(event.id));
+                                }}
                                 onClick={() => handleEventClick(event.id)}
                               >
                                 <div className={`w-2 h-2 rounded-full ${
