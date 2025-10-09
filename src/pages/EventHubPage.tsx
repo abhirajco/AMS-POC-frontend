@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
@@ -27,6 +27,7 @@ export const EventHubPage = ({
   setIsEventDialogOpen
 }: EventHubPageProps) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [events, setEvents] = useState(mockEvents);
   const [selectedType, setSelectedType] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [viewMode, setViewMode] = useState('calendar');
@@ -34,16 +35,18 @@ export const EventHubPage = ({
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
   const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
+  const [isEditingEvent, setIsEditingEvent] = useState(false);
+  const [editDraft, setEditDraft] = useState<any | null>(null);
 
   // Calculate event metrics
-  const eventMetrics = {
-    total: mockEvents.length,
-    upcoming: mockEvents.filter(event => event.status === 'Upcoming' || event.status === 'In Progress').length,
-    followUps: mockEvents.filter(event => event.status === 'Follow Up').length
-  };
+  const eventMetrics = useMemo(() => ({
+    total: events.length,
+    upcoming: events.filter(event => event.status === 'Upcoming' || event.status === 'In Progress').length,
+    followUps: events.filter(event => event.status === 'Follow Up').length
+  }), [events]);
 
   // Filter events based on search, type, and status
-  const filteredEvents = mockEvents.filter(event => {
+  const filteredEvents = events.filter(event => {
     if (searchQuery && !event.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !event.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (selectedType !== 'all' && event.type.toLowerCase() !== selectedType) return false;
@@ -62,6 +65,37 @@ export const EventHubPage = ({
   const handleEventClick = (eventId: number) => {
     setSelectedEventId(eventId);
     setIsEventDetailOpen(true);
+    setIsEditingEvent(false);
+    const selected = events.find(e => e.id === eventId);
+    setEditDraft(selected ? { ...selected } : null);
+  };
+
+  const handleDuplicate = () => {
+    if (!selectedEvent) return;
+    const maxId = Math.max(...events.map(e => e.id));
+    const newEvent = {
+      ...selectedEvent,
+      id: maxId + 1,
+      title: `${selectedEvent.title} (Copy)`,
+    } as any;
+    setEvents(prev => [...prev, newEvent]);
+    import('sonner').then(({ toast }) => toast.success('Event duplicated'));
+  };
+
+  const handleDelete = () => {
+    if (!selectedEvent) return;
+    const proceed = window.confirm('Delete this event? This cannot be undone.');
+    if (!proceed) return;
+    setEvents(prev => prev.filter(e => e.id !== selectedEvent.id));
+    setIsEventDetailOpen(false);
+    import('sonner').then(({ toast }) => toast.success('Event deleted'));
+  };
+
+  const handleSaveEdit = () => {
+    if (!editDraft) return;
+    setEvents(prev => prev.map(e => e.id === editDraft.id ? editDraft : e));
+    setIsEditingEvent(false);
+    import('sonner').then(({ toast }) => toast.success('Event updated'));
   };
 
   const getStatusBadge = (status: string) => {
@@ -111,7 +145,7 @@ export const EventHubPage = ({
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
-      const dayEvents = mockEvents.filter(event => {
+      const dayEvents = events.filter(event => {
         const eventDate = new Date(event.date);
         return eventDate.toDateString() === date.toDateString();
       });
@@ -141,7 +175,7 @@ export const EventHubPage = ({
     setSelectedDate(newDate);
   };
 
-  const selectedEvent = selectedEventId ? mockEvents.find(e => e.id === selectedEventId) : null;
+  const selectedEvent = selectedEventId ? events.find(e => e.id === selectedEventId) : null;
 
   return (
     <div className="bg-neutral-50 flex flex-col h-full">
@@ -478,26 +512,50 @@ export const EventHubPage = ({
           {selectedEvent && (
             <div className="space-y-6">
               <div className="flex items-center gap-2">
-                {getStatusBadge(selectedEvent.status)}
-                {getPriorityBadge(selectedEvent.priority)}
-                <Badge variant="outline">{selectedEvent.type}</Badge>
+                {getStatusBadge(isEditingEvent ? editDraft?.status : selectedEvent.status)}
+                {getPriorityBadge(isEditingEvent ? editDraft?.priority : selectedEvent.priority)}
+                <Badge variant="outline">{isEditingEvent ? editDraft?.type : selectedEvent.type}</Badge>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm text-gray-700">Event Details</Label>
                   <div className="mt-2 space-y-2 text-sm">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-3 items-center">
                       <span className="text-gray-600">Date:</span>
-                      <span className="text-gray-900">{selectedEvent.eventDate}</span>
+                      {isEditingEvent ? (
+                        <Input
+                          value={editDraft?.eventDate || ''}
+                          onChange={(e) => setEditDraft((d: any) => ({ ...d, eventDate: e.target.value }))}
+                          className="border-gray-300 max-w-[180px]"
+                        />
+                      ) : (
+                        <span className="text-gray-900">{selectedEvent.eventDate}</span>
+                      )}
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-3 items-center">
                       <span className="text-gray-600">Time:</span>
-                      <span className="text-gray-900">{selectedEvent.time}</span>
+                      {isEditingEvent ? (
+                        <Input
+                          value={editDraft?.time || ''}
+                          onChange={(e) => setEditDraft((d: any) => ({ ...d, time: e.target.value }))}
+                          className="border-gray-300 max-w-[180px]"
+                        />
+                      ) : (
+                        <span className="text-gray-900">{selectedEvent.time}</span>
+                      )}
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-3 items-center">
                       <span className="text-gray-600">Location:</span>
-                      <span className="text-gray-900">{selectedEvent.location}</span>
+                      {isEditingEvent ? (
+                        <Input
+                          value={editDraft?.location || ''}
+                          onChange={(e) => setEditDraft((d: any) => ({ ...d, location: e.target.value }))}
+                          className="border-gray-300 max-w-[200px]"
+                        />
+                      ) : (
+                        <span className="text-gray-900">{selectedEvent.location}</span>
+                      )}
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Due:</span>
@@ -526,7 +584,16 @@ export const EventHubPage = ({
 
               <div>
                 <Label className="text-sm text-gray-700">Description</Label>
-                <p className="mt-2 text-sm text-gray-900">{selectedEvent.description}</p>
+                {isEditingEvent ? (
+                  <Textarea
+                    className="border-gray-300 mt-2"
+                    rows={3}
+                    value={editDraft?.description || ''}
+                    onChange={(e) => setEditDraft((d: any) => ({ ...d, description: e.target.value }))}
+                  />
+                ) : (
+                  <p className="mt-2 text-sm text-gray-900">{selectedEvent.description}</p>
+                )}
               </div>
 
               <div>
@@ -571,15 +638,21 @@ export const EventHubPage = ({
                     </a>
                   </div>
                 )}
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleDuplicate}>
                   <Copy className="w-4 h-4 mr-2" />
                   Duplicate
                 </Button>
-                <Button variant="outline">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-                <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
+                {isEditingEvent ? (
+                  <Button className="bg-[#1a2c47] text-white hover:bg-[#2a3c57]" onClick={handleSaveEdit}>
+                    Save Changes
+                  </Button>
+                ) : (
+                  <Button variant="outline" onClick={() => setIsEditingEvent(true)}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                )}
+                <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-50" onClick={handleDelete}>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete
                 </Button>
