@@ -2514,6 +2514,180 @@ export const mockEvents = [
       }
     ]
   }
+  ,
+  // Duplicated September events for October with new dates
+  {
+    id: 14,
+    title: "API Integration Workshop",
+    type: "Workshop",
+    status: "Planning",
+    priority: "Medium",
+    date: "2025-10-03",
+    eventDate: "03-10-2025",
+    time: "09:00 - 13:00 GMT",
+    location: "Virtual",
+    dueTime: "18 days",
+    description: "Technical workshop to guide partners through new API integration options.",
+    assignedTeam: [
+      {
+        id: 23,
+        name: "Arpit Saxena",
+        role: "Lead Trainer",
+        initials: "AS"
+      },
+      {
+        id: 24,
+        name: "Sujith Kumar",
+        role: "Workshop Moderator",
+        initials: "SK"
+      }
+    ],
+    milestones: [
+      {
+        id: 23,
+        title: "Workshop material preparation",
+        assignedTo: "Arpit Saxena",
+        dueDate: "01-10-2025",
+        status: "Not Started"
+      },
+      {
+        id: 24,
+        title: "Partner invitations",
+        assignedTo: "Sujith Kumar",
+        dueDate: "28-09-2025",
+        status: "In Progress"
+      }
+    ]
+  },
+  {
+    id: 15,
+    title: "Global Risk Management Forum",
+    type: "Conference",
+    status: "Upcoming",
+    priority: "High",
+    date: "2025-10-08",
+    eventDate: "08-10-2025",
+    time: "10:00 - 18:00 GMT",
+    location: "Berlin",
+    dueTime: "40 days",
+    description: "A comprehensive forum examining emerging risks in insurance and best practice management strategies.",
+    assignedTeam: [
+      {
+        id: 13,
+        name: "Lionel Alva",
+        role: "Event Coordinator",
+        initials: "LA"
+      },
+      {
+        id: 14,
+        name: "Sweta Awasthi",
+        role: "Panel Moderator",
+        initials: "SA"
+      }
+    ],
+    milestones: [
+      {
+        id: 13,
+        title: "Panel selection",
+        assignedTo: "Lionel Alva",
+        dueDate: "25-09-2025",
+        status: "Not Started"
+      },
+      {
+        id: 14,
+        title: "Agenda finalization",
+        assignedTo: "Sweta Awasthi",
+        dueDate: "01-10-2025",
+        status: "Not Started"
+      }
+    ]
+  },
+  {
+    id: 16,
+    title: "Product Roadmap Reveal",
+    type: "Campaign",
+    status: "Upcoming",
+    priority: "High",
+    date: "2025-10-10",
+    eventDate: "10-10-2025",
+    time: "16:00 - 17:00 GMT",
+    location: "London",
+    dueTime: "43 days",
+    description: "Campaign launch event to unveil the product roadmap for the next fiscal year.",
+    assignedTeam: [
+      {
+        id: 25,
+        name: "Maurvee Sharma",
+        role: "Campaign Lead",
+        initials: "MS"
+      },
+      {
+        id: 26,
+        name: "Sweta Awasthi",
+        role: "Content Coordinator",
+        initials: "SA"
+      }
+    ],
+    milestones: [
+      {
+        id: 25,
+        title: "Roadmap documentation",
+        assignedTo: "Maurvee Sharma",
+        dueDate: "07-10-2025",
+        status: "Not Started"
+      },
+      {
+        id: 26,
+        title: "Social promotion plan",
+        assignedTo: "Sweta Awasthi",
+        dueDate: "09-10-2025",
+        status: "Not Started"
+      }
+    ]
+  },
+  {
+    id: 17,
+    title: "Annual Stakeholder Meeting",
+    type: "Meeting",
+    status: "Planning",
+    priority: "High",
+    date: "2025-10-13",
+    eventDate: "13-10-2025",
+    time: "09:30 - 13:00 GMT",
+    location: "Singapore",
+    dueTime: "48 days",
+    description: "Annual review of strategic initiatives and performance with key stakeholders.",
+    assignedTeam: [
+      {
+        id: 17,
+        name: "Matt Pesce",
+        role: "Lead Facilitator",
+        initials: "MP"
+      },
+      {
+        id: 18,
+        name: "Arpit Saxena",
+        role: "Note Taker",
+        initials: "AS"
+      }
+    ],
+    milestones: [
+      {
+        id: 17,
+        title: "Agenda drafting",
+        assignedTo: "Arpit Saxena",
+        dueDate: "30-09-2025",
+        status: "Not Started"
+      },
+      {
+        id: 18,
+        title: "Presentation preparation",
+        assignedTo: "Matt Pesce",
+        dueDate: "05-10-2025",
+        status: "Not Started"
+      }
+    ]
+  }
 ];
 
 // Mock Comments Data
@@ -2934,8 +3108,8 @@ export const mockAssets = [
     type: "Document",
     format: "PDF",
     size: "2.4 MB",
-    uploadDate: "2025-07-25",
-    dateModified: "2025-07-25",
+    uploadDate: "2025-10-25",
+    dateModified: "2025-10-25",
     uploadedBy: "Sujith Kumar",
     tags: ["Brand", "Guidelines", "Design", "Identity"],
     category: "Brand Assets",
@@ -2959,8 +3133,8 @@ export const mockAssets = [
     type: "Video",
     format: "MP4",
     size: "125.8 MB",
-    uploadDate: "2025-07-23",
-    dateModified: "2025-07-23",
+    uploadDate: "2025-10-23",
+    dateModified: "2025-10-23",
     uploadedBy: "Matt Pesce",
     tags: ["Product", "Demo", "Marketing", "Video"],
     category: "Marketing Assets",
@@ -2985,8 +3159,8 @@ export const mockAssets = [
     type: "Image",
     format: "PNG",
     size: "1.8 MB",
-    uploadDate: "2025-07-20",
-    dateModified: "2025-07-20",
+    uploadDate: "2025-10-20",
+    dateModified: "2025-10-20",
     uploadedBy: "Maurvee Sharma",
     tags: ["Insurance", "Infographic", "Visual", "Statistics"],
     category: "Design Assets",
@@ -3010,8 +3184,8 @@ export const mockAssets = [
     type: "Graphics",
     format: "SVG",
     size: "24 KB",
-    uploadDate: "2025-07-18",
-    dateModified: "2025-07-18",
+    uploadDate: "2025-10-18",
+    dateModified: "2025-10-18",
     uploadedBy: "Lionel Alva",
     tags: ["Logo", "Branding", "Vector", "Primary"],
     category: "Brand Assets",
@@ -3035,8 +3209,8 @@ export const mockAssets = [
     type: "Graphics",
     format: "FIGMA",
     size: "8.7 MB",
-    uploadDate: "2025-07-22",
-    dateModified: "2025-07-26",
+    uploadDate: "2025-10-22",
+    dateModified: "2025-10-26",
     uploadedBy: "Sweta Awasthi",
     tags: ["Social Media", "Templates", "Design", "Figma"],
     category: "Campaign Assets",
@@ -3060,8 +3234,8 @@ export const mockAssets = [
     type: "Document",
     format: "DOCX",
     size: "456 KB",
-    uploadDate: "2025-07-15",
-    dateModified: "2025-07-20",
+    uploadDate: "2025-10-15",
+    dateModified: "2025-10-20",
     uploadedBy: "Richard Jefferies",
     tags: ["Case Study", "Template", "Content", "Documentation"],
     category: "Content Assets",
@@ -3085,8 +3259,8 @@ export const mockAssets = [
     type: "Image",
     format: "JPG",
     size: "3.2 MB",
-    uploadDate: "2025-07-10",
-    dateModified: "2025-07-10",
+    uploadDate: "2025-10-10",
+    dateModified: "2025-10-10",
     uploadedBy: "Sujith Kumar",
     tags: ["Team", "Photography", "Q3", "Corporate"],
     category: "Corporate Assets",
@@ -3110,8 +3284,8 @@ export const mockAssets = [
     type: "Graphics",
     format: "PSD",
     size: "45.6 MB",
-    uploadDate: "2025-07-12",
-    dateModified: "2025-07-19",
+    uploadDate: "2025-10-12",
+    dateModified: "2025-10-19",
     uploadedBy: "Matt Pesce",
     tags: ["Product", "Mockups", "Photoshop", "Design"],
     category: "Design Assets",
@@ -3136,8 +3310,8 @@ export const mockAssets = [
     type: "Audio",
     format: "MP3",
     size: "28.4 MB",
-    uploadDate: "2025-07-21",
-    dateModified: "2025-07-21",
+    uploadDate: "2025-10-21",
+    dateModified: "2025-10-21",
     uploadedBy: "Maurvee Sharma",
     tags: ["Podcast", "Episode", "Audio"],
     category: "Media Assets",
@@ -3159,8 +3333,8 @@ export const mockAssets = [
     type: "Excel",
     format: "XLSX",
     size: "512 KB",
-    uploadDate: "2025-07-19",
-    dateModified: "2025-07-22",
+    uploadDate: "2025-10-19",
+    dateModified: "2025-10-22",
     uploadedBy: "Sweta Awasthi",
     tags: ["Metrics", "Report", "Excel"],
     category: "Reports",
@@ -3181,8 +3355,8 @@ export const mockAssets = [
     type: "PPT",
     format: "PPTX",
     size: "6.2 MB",
-    uploadDate: "2025-07-24",
-    dateModified: "2025-07-24",
+    uploadDate: "2025-10-24",
+    dateModified: "2025-10-24",
     uploadedBy: "Lionel Alva",
     tags: ["Presentation", "Strategy", "Q3"],
     category: "Presentations",
@@ -3203,8 +3377,8 @@ export const mockAssets = [
     type: "Link",
     format: "URL",
     size: "N/A",
-    uploadDate: "2025-07-28",
-    dateModified: "2025-07-28",
+    uploadDate: "2025-10-28",
+    dateModified: "2025-10-28",
     uploadedBy: "Richard Jefferies",
     tags: ["Landing Page", "Campaign", "URL"],
     category: "Web Assets",
@@ -3225,8 +3399,8 @@ export const mockAssets = [
     type: "PDF",
     format: "PDF",
     size: "1.1 MB",
-    uploadDate: "2025-07-26",
-    dateModified: "2025-07-26",
+    uploadDate: "2025-10-26",
+    dateModified: "2025-10-26",
     uploadedBy: "Sujith Kumar",
     tags: ["Case Study", "PDF"],
     category: "Case Studies",
@@ -3247,8 +3421,8 @@ export const mockAssets = [
     type: "Image",
     format: "JPG",
     size: "2.1 MB",
-    uploadDate: "2025-07-29",
-    dateModified: "2025-07-29",
+    uploadDate: "2025-10-29",
+    dateModified: "2025-10-29",
     uploadedBy: "Matt Pesce",
     tags: ["Banner", "Homepage", "Image"],
     category: "Web Assets",
