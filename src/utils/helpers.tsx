@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Check, Image, FileVideo, FileText, Palette } from 'lucide-react';
 
-export const normalizeStatus = (status: string): string => {
+export const normalizeStatus = (status: string): string => 
+{
   if (!status) return "";
   return status.trim().toLowerCase().replace(/\s+/g, "-");
 };

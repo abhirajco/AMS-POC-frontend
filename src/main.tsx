@@ -5,8 +5,10 @@ import { Toaster } from './components/ui/sonner'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-    <Toaster richColors position="top-right" />
-  </StrictMode>,
+<>
+   <App />
+   <Toaster richColors position="top-right" />
+</>
+   
+
 )

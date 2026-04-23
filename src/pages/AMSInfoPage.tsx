@@ -1,16 +1,8 @@
-import { HeaderSection } from "@/components/common/HeaderSection";
+import  HeaderSection  from "@/components/common/HeaderSection";
 import amslogo from "@/assets/images/Adromarketlogo.png";
-// Removed unused image/icon imports to resolve TS6133 errors
 
-interface AMSInfoPageProps {
-  setIsSidebarOpen: (open: boolean) => void;
-}
-
-// Adjustable font sizes for InfoCard sections
-// Tweak these classes to increase/decrease sizes globally for all InfoCards
 const INFOCARD_TITLE_SIZE_CLASS = "text-[26px] sm:text-[30px]";
 const INFOCARD_BODY_SIZE_CLASS = "text-[15px] sm:text-[16px]";
-// (Removed unused image size constants that were only used by commented sections)
 
 function HeroSection() {
   return (
@@ -91,58 +83,21 @@ function MainContent() {
               As the platform evolves, AMS will continue to adapt, learn, and scale alongside the organization — not just as a tool, but as a strategic partner in driving meaningful engagement and measurable growth.
             </p>
           </InfoCard>
-          {/* <InfoCard title="Roles in AMS">
-            <ul className="space-y-3 text-gray-800 mb-10">
-            {[
-              "Associate",
-              "Department Head",
-              "Marketing Head",
-              "Executive",
-              "Admin"
-            ].map((item, i) => (
-              <li key={i} className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 transition">
-                <CheckCircle2 className="h-5 w-5 text-[#1a2c47] flex-shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-            <div className={`w-full flex justify-center ${INFOCARD_IMAGE_WRAPPER_MAX_WIDTH_CLASS} mx-auto`}>
-              <img src={roles} alt="Roles in AMS" className={`${INFOCARD_IMAGE_CLASS}`} />
-            </div>
-          </InfoCard>
-          <InfoCard title="AMS Capabilities">
-            <ul className="space-y-3 text-gray-800 mb-10">
-            {[
-              "All-in-One Platform",
-              "Intelligent Assistance",
-              "Workflow Automation",
-              "Integrated Insights",
-              "Improved Collaboration",
-              "Governance & Version Control",
-            ].map((item, i) => (
-              <li key={i} className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 transition">
-                <CheckCircle2 className="h-5 w-5 text-[#1a2c47] flex-shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-            <div className={`w-full flex justify-center ${INFOCARD_IMAGE_WRAPPER_MAX_WIDTH_CLASS} mx-auto`}>
-              <img src={amscapability} alt="AMS Capabilities" className={`${INFOCARD_IMAGE_CLASS}`} />
-            </div>
-          </InfoCard> */}
         </div>
       </div>
     </div>
   );
 }
 
-export function AMSInfoPage({ setIsSidebarOpen }: AMSInfoPageProps) {
+export function AMSInfoPage() {
   return (
-    <div className="flex-1 bg-neutral-50 flex flex-col overflow-hidden">
-      <HeaderSection setIsSidebarOpen={setIsSidebarOpen} />
+    <div className="flex-1 bg-neutral-50 flex flex-col h-screen">
+      <HeaderSection />
       <div className="flex-1 overflow-auto min-h-0">
         <MainContent />
       </div>
     </div>
   );
 }
+
+export default AMSInfoPage
