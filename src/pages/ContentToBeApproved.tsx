@@ -182,6 +182,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { normalizeStatus } from "@/utils/helpers";
+import { Divider } from "@mui/material";
 
 const ContentToBeApproved = () => {
   type Content = {
@@ -300,35 +301,37 @@ const ContentToBeApproved = () => {
       <HeaderSection />
 
       {/* ✅ Tabs */}
-      <div className="flex gap-6 mt-5 mb-7 text-sm font-medium justify-between">
+      <div className="flex gap-6 mt-5 mb-12 text-sm font-medium justify-start border rounded-sm border-gray-300 px-4 py-1">
         <h1
           onClick={() => setActiveFilter("admin")}
-          className={`cursor-pointer pb-1 ${
+          className={`cursor-pointer pb-1 mr-7 ${
             activeFilter === "admin"
               ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-600"
+              : ""
           }`}
         >
           Admin Approval Pending
         </h1>
+          <Divider orientation="vertical" flexItem />
 
         <h1
           onClick={() => setActiveFilter("executive")}
-          className={`cursor-pointer pb-1 ${
+          className={`cursor-pointer pb-1 mr-7 ${
             activeFilter === "executive"
               ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-600"
+              : ""
           }`}
         >
           Executive Approval Pending
         </h1>
+           <Divider orientation="vertical" flexItem />
 
         <h1
           onClick={() => setActiveFilter("internal")}
           className={`cursor-pointer pb-1 ${
             activeFilter === "internal"
               ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-600"
+              : ""
           }`}
         >
           Internal Approval Pending

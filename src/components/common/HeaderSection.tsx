@@ -2,8 +2,8 @@ import { Input } from "../ui/input";
 import { Search, Bell } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { IconButton, Menu, MenuItem, Badge, Typography, Divider } from "@mui/material";
+import MenuIcon from '@mui/icons-material/Menu';
 
 const HeaderSection = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -41,10 +41,13 @@ const HeaderSection = () => {
           </div>
 
           {/* NOTIFICATION */}
-          <IconButton onClick={handleClick}>
+          <IconButton >
             <Badge color="error">
               <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
             </Badge>
+          </IconButton>
+          <IconButton onClick={handleClick}>
+            <MenuIcon sx={{ color: "gray" }}/>
           </IconButton>
 
           {/* DROPDOWN MENU */}

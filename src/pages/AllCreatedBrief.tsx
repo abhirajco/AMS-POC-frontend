@@ -3,6 +3,8 @@ import { BASE_URL } from "@/utils/BASE_URL";
 import { useEffect, useState } from "react";
 import { Popover, Box, FormControl, InputLabel, Select, MenuItem, Button, Typography, TextField } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { getStatusBadge, normalizeStatus } from "@/utils/helpers";
 
 const AllCreatedBrief = () => {
     type ContentBrief = {
@@ -12,7 +14,7 @@ const AllCreatedBrief = () => {
         created_by_name: string;
         brief: string;
         created_at: string;
-        initiated:boolean;
+        initiated: boolean;
 
     };
     type Campaign = {
@@ -49,6 +51,7 @@ const AllCreatedBrief = () => {
     const [brief, setBrief] = useState("");
     const [sme, setSme] = useState("");
     const [formId, setFormId] = useState("");
+    const [contentDetails, setContentDetails] = useState({});
     const navigate = useNavigate();
 
     const allCreatedBrief = async () => {
@@ -60,7 +63,47 @@ const AllCreatedBrief = () => {
             const data = await res.json();
             console.log(data.results);
             setAllContentBrief(data.results);
+            // fetchParticularContent(data.)
             //console.log(allContentBrief);
+        }
+        catch (err) {
+            console.error(err);
+        }
+    }
+
+  const getStatusBadge = (item: any) => {
+          const normalizedStatus = normalizeStatus(item?.status);
+          switch (normalizedStatus) {
+              case 'draft':
+                  return <Badge variant="secondary" className="bg-gray-100 text-black">Draft</Badge>;
+              case 'in_review':
+                  return <Badge className="bg-blue-600 text-white">In review</Badge>;
+              case 'published':
+                  return <Badge variant="secondary" className="bg-green-500 text-white">Published</Badge>;
+              case 'approved':
+                  return <Badge variant="secondary" className="bg-yellow-400 text-black">Approved</Badge>;
+              case 'rejected':
+                  return <Badge variant="secondary" className="bg-red-600 text-white">Rejected</Badge>;
+              default:
+                  return <Badge variant="outline">{item?.status}</Badge>;
+          }
+      };
+
+    const fetchParticularContent = async (id) => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            const res = await fetch(`${BASE_URL}/content/contents/${id}`,
+                {
+                    method: "GET",
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            )
+            const data = await res.json();
+            setContentDetails(prev => ({
+                ...prev,
+                [id]: data
+            }));
+            console.log(data);
         }
         catch (err) {
             console.error(err);
@@ -133,7 +176,6 @@ const AllCreatedBrief = () => {
         }
     }
 
-
     const createContentBrief = async () => {
         const token = localStorage.getItem("accessToken");
 
@@ -188,13 +230,6 @@ const AllCreatedBrief = () => {
 
             console.log("SME Assigned:", data2);
 
-
-
-            // navigate("/generate-new-content", {
-            //     state: {
-            //         contentId: data1.content_id,
-            //     },
-            // });
             navigate("/generate-new-content", {
                 state: {
                     contentId: data1.content_id,
@@ -232,6 +267,7 @@ const AllCreatedBrief = () => {
                 throw new Error(data.message || "Failed to fetch");
             }
 
+
             setTitle(data.title);
             setBrief(data.brief);
             setContentType(data.content_type);
@@ -258,6 +294,18 @@ const AllCreatedBrief = () => {
         fetchExecutive();
     }, [])
 
+    useEffect(() => {
+        allContentBrief.forEach(task => {
+            if (
+                task.initiated &&
+                task.content &&
+                !contentDetails[task.content]
+            ) {
+                fetchParticularContent(task.content);
+            }
+        });
+    }, [allContentBrief]);
+
     return (
         <>
             <HeaderSection />
@@ -275,16 +323,28 @@ const AllCreatedBrief = () => {
                                 </div>
                             </div>
                             <div>
-                                {task.initiated ? (<button
-                                className="bg-blue-800 text-white px-3 py-1 rounded-sm "
-                                >This brief has been picked up</button>):
+                                {/* {task.initiated ? ("") :
                                     (<button
                                         className="bg-blue-950 text-white px-3 py-1 rounded-sm hover:bg-blue-800"
                                         onClick={handleOpen}
                                     >
                                         Start Working
                                     </button>)
-                                }
+                                } */}
+                                {!task.initiated ? (
+                                    <button className="bg-blue-950 text-white px-3 py-1 rounded-sm hover:bg-blue-800"
+                                        onClick={handleOpen}>Start Working</button>
+                                ) : (
+                                    <div>
+                                        {contentDetails[task.content] ? (
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                            {getStatusBadge(contentDetails[task.content])}
+                                            </div>
+                                        ) : (
+                                            <span>Loading</span>
+                                        )}
+                                    </div>
+                                )}
 
                             </div>
                         </div>

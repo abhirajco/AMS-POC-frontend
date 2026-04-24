@@ -53,49 +53,6 @@ const ContentHubPage = () => {
     setAnchorEl(null);
   };
 
-  // const createNewContent = async () => {
-  //   const token = localStorage.getItem("accessToken");
-
-  //   try {
-  //     const res = await fetch(`${BASE_URL}/content/contents/new/`, {
-  //       method: "POST",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         title,
-  //         brief,
-  //         content_type: contentType,
-  //         campaign_id: campaignId,
-  //         ...(eventId && { event_id: eventId }),
-  //         tags,
-  //         executive_id: executiveId,
-  //       }),
-  //     });
-
-  //     const data = await res.json();
-  //     console.log(data);
-
-  //     if (res.ok) {
-  //       setTitle("");
-  //       setBrief("");
-  //       setCampaignId("");
-  //       setEventId("");
-  //       setExecutiveId("");
-  //       setContentType("");
-  //       setTags("");
-
-  //       handleClose();
-  //     } else {
-  //       console.error("Error:", data);
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
-
-
   const createNewContent = async () => {
     const token = localStorage.getItem("accessToken");
 
