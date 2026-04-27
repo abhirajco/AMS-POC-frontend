@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { Popover, Box, FormControl, InputLabel, Select, MenuItem, Typography, TextField } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "sonner";
 const ContentHubPage = () => {
 
   const [stats, setStats] = useState({
@@ -53,87 +53,213 @@ const ContentHubPage = () => {
     setAnchorEl(null);
   };
 
-  const createNewContent = async () => {
-    const token = localStorage.getItem("accessToken");
+  // const createNewContent = async () => {
+  //   const token = localStorage.getItem("accessToken");
 
+  //   try {
+  //     const res1 = await fetch(`${BASE_URL}/content/contents/new/`, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         title,
+  //         brief,
+  //         content_type: contentType,
+  //         campaign_id: campaignId,
+  //         ...(eventId && { event_id: eventId }),
+  //         tags,
+  //         executive_id: executiveId,
+  //       }),
+  //     });
+
+  //     const data1 = await res1.json();
+
+  //     if (!res1.ok) {
+  //       console.error("Create Content Failed:", data1);
+  //       return;
+  //     }
+
+  //     const contentId = data1.content_id;
+  //     const executiveIdFromResponse = data1.executive_id;
+
+  //     if (!contentId || !executiveIdFromResponse) {
+  //       console.error("Missing content_id or executive_id in response");
+  //       return;
+  //     }
+
+  //  const res2 = await fetch(
+  //       `${BASE_URL}/content/contents/${contentId}/assign-sme/`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           executive_id: executiveIdFromResponse,
+  //         }),
+  //       }
+  //     );
+
+  //     const data2 = await res2.json();
+
+  //     if (!res2.ok) {
+  //       console.error("Assign SME Failed:", data2);
+  //       return;
+  //     }
+
+    
+  //     setTitle("");
+  //     setBrief("");
+  //     setCampaignId("");
+  //     setEventId("");
+  //     setExecutiveId("");
+  //     setContentType("");
+  //     setTags("");
+  //     handleClose();
+
+  //     navigate("/generate-new-content", {
+  //       state: {
+  //         contentId: contentId,
+  //         title,
+  //         brief,
+  //         contentType,
+  //       },
+  //     });
+
+  //   } catch (err) {
+  //     console.error("Unexpected Error:", err);
+  //   }
+  // };
+
+
+const createNewContent = async () => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    toast.error("Session expired. Please login again.");
+    localStorage.clear();
+    navigate("/login");
+    return;
+  }
+
+  try {
+    const res1 = await fetch(`${BASE_URL}/content/contents/new/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        brief,
+        content_type: contentType,
+        campaign_id: campaignId,
+        ...(eventId && { event_id: eventId }),
+        tags,
+        executive_id: executiveId,
+      }),
+    });
+
+    let data1 = {};
     try {
-      const res1 = await fetch(`${BASE_URL}/content/contents/new/`, {
+      data1 = await res1.json();
+    } catch {
+      data1 = {};
+    }
+
+    if (!res1.ok) {
+      if (res1.status === 401) {
+        toast.error("Session expired. Please login again.");
+        localStorage.clear();
+        navigate("/login");
+        return;
+      }
+
+      if (res1.status === 403) {
+        toast.error("You are not authorized to create content.");
+        return;
+      }
+
+      toast.error(data1?.message || "Failed to create content.");
+      return;
+    }
+
+    const contentId = data1?.content_id;
+    const executiveIdFromResponse = data1?.executive_id;
+
+    if (!contentId || !executiveIdFromResponse) {
+      toast.error("Invalid response from server.");
+      return;
+    }
+
+    const res2 = await fetch(
+      `${BASE_URL}/content/contents/${contentId}/assign-sme/`,
+      {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title,
-          brief,
-          content_type: contentType,
-          campaign_id: campaignId,
-          ...(eventId && { event_id: eventId }),
-          tags,
-          executive_id: executiveId,
+          executive_id: executiveIdFromResponse,
         }),
-      });
-
-      const data1 = await res1.json();
-
-      if (!res1.ok) {
-        console.error("Create Content Failed:", data1);
-        return;
       }
+    );
 
-      const contentId = data1.content_id;
-      const executiveIdFromResponse = data1.executive_id;
-
-      if (!contentId || !executiveIdFromResponse) {
-        console.error("Missing content_id or executive_id in response");
-        return;
-      }
-
-   const res2 = await fetch(
-        `${BASE_URL}/content/contents/${contentId}/assign-sme/`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            executive_id: executiveIdFromResponse,
-          }),
-        }
-      );
-
-      const data2 = await res2.json();
-
-      if (!res2.ok) {
-        console.error("Assign SME Failed:", data2);
-        return;
-      }
+    let data2 = {};
+    try {
+      data2 = await res2.json();
+    } catch {
+      data2 = {};
+    }
 
     
-      setTitle("");
-      setBrief("");
-      setCampaignId("");
-      setEventId("");
-      setExecutiveId("");
-      setContentType("");
-      setTags("");
-      handleClose();
+    if (!res2.ok) {
+      if (res2.status === 401) {
+        toast.error("Session expired. Please login again.");
+        localStorage.clear();
+        navigate("/login");
+        return;
+      }
 
-      navigate("/generate-new-content", {
-        state: {
-          contentId: contentId,
-          title,
-          brief,
-          contentType,
-        },
-      });
+      // if (res2.status === 403) {
+      //   toast.error("You are not authorized to assign SME.");
+      //   return;
+      // }
 
-    } catch (err) {
-      console.error("Unexpected Error:", err);
+      toast.error(data2?.message || "Failed to assign SME.");
+      return;
     }
-  };
 
+    toast.success("Content created successfully 🎉");
+
+    
+    setTitle("");
+    setBrief("");
+    setCampaignId("");
+    setEventId("");
+    setExecutiveId("");
+    setContentType("");
+    setTags("");
+    handleClose();
+
+    navigate("/generate-new-content", {
+      state: {
+        contentId,
+        title,
+        brief,
+        contentType,
+      },
+    });
+
+  } catch (err) {
+    console.error("Unexpected Error:", err);
+    toast.error("Network error. Please try again.");
+  }
+};
 
   const fetchEvents = async (id: string) => {
     const token = localStorage.getItem("accessToken");

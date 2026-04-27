@@ -93,7 +93,7 @@ export function AMSInfoPage() {
   return (
     <div className="flex-1 bg-neutral-50 flex flex-col h-screen">
       <HeaderSection />
-      <div className="flex-1 overflow-auto min-h-0">
+      <div className="flex-1  min-h-0">
         <MainContent />
       </div>
     </div>

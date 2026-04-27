@@ -301,7 +301,7 @@ const ContentToBeApproved = () => {
       <HeaderSection />
 
       {/* ✅ Tabs */}
-      <div className="flex gap-6 mt-5 mb-12 text-sm font-medium justify-start border rounded-sm border-gray-300 px-4 py-1">
+      <div className="flex gap-6 mt-5 mb-12 text-sm font-medium justify-start border rounded-sm border-gray-300 px-4 py-1 w-fit">
         <h1
           onClick={() => setActiveFilter("admin")}
           className={`cursor-pointer pb-1 mr-7 ${
