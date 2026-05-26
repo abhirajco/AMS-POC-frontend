@@ -6,6 +6,7 @@ import { BASE_URL } from "@/utils/BASE_URL"
 import { Card, CardContent } from "../components/ui/card";
 import CommentSection from "@/components/ui/CommentSection"
 import { toast } from "sonner"
+import VersionSidebar from "@/components/ui/VersionSidebar"
 
 const ContentEditorPage = () => {
 
@@ -18,6 +19,7 @@ const ContentEditorPage = () => {
   const [marketingApproval, setMarketingApproval] = useState(false);
   const [stakeholderApproval, setStakeholderApproval] = useState(false);
   const [refreshVersionsKey, setRefreshVersionsKey] = useState(0);
+  const [allContent, setAllContent] = useState([]);
 
 
   type HistoryItem = {
@@ -360,6 +362,11 @@ const ContentEditorPage = () => {
       <div className="flex gap-4">
         {/* LEFT → Editor */}
         <div className="flex-1">
+          {/* <VersionSidebar
+                    allContent={allContent}
+                    onSelect={fetchVersionDetails}
+                    refreshKey={refreshVersionsKey}
+                  /> */}
           <Card className="bg-white border border-gray-300">
             <CardContent className="p-3 sm:p-4">
               <TextEditor

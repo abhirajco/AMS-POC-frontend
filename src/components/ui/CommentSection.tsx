@@ -973,7 +973,7 @@
 import { BASE_URL } from '@/utils/BASE_URL'
 import { useState, useEffect, useRef, memo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageSquare, MoreVertical, Pencil, Trash2, CornerDownRight } from 'lucide-react';
+import { MessageSquare, MoreVertical, Pencil, Trash2, CornerDownRight, CheckSquare } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -990,6 +990,7 @@ type Comment = {
   timestamp: string;
   selected_text: string;
   reply_to: string | null;
+  resolved: boolean;
 };
 
 type User = {
@@ -1032,8 +1033,6 @@ const formatDateTime = (dateString: string) => {
 const getInitials = (name: string) =>
   name?.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
-// ─── CommentItem (outside parent — prevents remount when parent state changes) ─
-
 interface CommentItemProps {
   comment: Comment;
   isReply?: boolean;
@@ -1057,6 +1056,7 @@ interface CommentItemProps {
   onReplySubmit: (parentId: string) => void;
   onReplyCancel: () => void;
   getRepliesFor: (id: string) => Comment[];
+  onResolve: (id: string) => void;
 }
 
 const CommentItem = memo(({
@@ -1081,6 +1081,7 @@ const CommentItem = memo(({
   onReplySubmit,
   onReplyCancel,
   getRepliesFor,
+  onResolve,
 }: CommentItemProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const replies = getRepliesFor(comment.comment_id);
@@ -1187,9 +1188,33 @@ const CommentItem = memo(({
             </div>
           </div>
         ) : (
-          <p className="text-[11px] sm:text-[12px] text-gray-700 leading-relaxed pl-8 sm:pl-9">
-            {renderCommentText(comment.text)}
-          </p>
+          <>
+            <p className="text-[11px] sm:text-[12px] text-gray-700 leading-relaxed pl-8 sm:pl-9">
+              {renderCommentText(comment.text)}
+            </p>
+            <div className="pl-8 sm:pl-9 mt-1">
+              {comment.resolved ? (
+                <Button className="text-[10px] sm:text-[11px] font-semibold text-blue-950 p-0 h-auto"
+                  variant="ghost"
+                  size="sm">
+                  <CheckSquare className="w-3 h-3 mr-1" />
+                  Comment resolved
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[10px] sm:text-[11px] font-semibold text-green-600 hover:text-green-800 p-0 h-auto"
+                  onClick={() => onResolve(comment.comment_id)}
+                >
+
+                  Mark as resolved
+                </Button>
+              )}
+            </div>
+          </>
+
+
         )}
 
         {/* Reply input */}
@@ -1260,6 +1285,7 @@ const CommentItem = memo(({
               onReplySubmit={onReplySubmit}
               onReplyCancel={onReplyCancel}
               getRepliesFor={getRepliesFor}
+              onResolve={onResolve}
             />
           ))}
         </div>
@@ -1286,6 +1312,10 @@ const CommentSection = ({ id }: { id: string }) => {
   const [replyMentionUsers, setReplyMentionUsers] = useState<User[]>([]);
   const [showReplyDropdown, setShowReplyDropdown] = useState(false);
 
+  const convertBackendToDisplay = (text: string) => {
+    return text.replace(/@\[(.*?)\]\((.*?)\)/g, '@$1');
+  };
+
   const fetchCommentHistory = async (contentId: string) => {
     const token = localStorage.getItem('accessToken');
     if (!contentId) return;
@@ -1296,9 +1326,81 @@ const CommentSection = ({ id }: { id: string }) => {
       );
       if (!res.ok) throw new Error('Failed to fetch comment history');
       const data = await res.json();
+      console.log(data);
       setComments(data.comments);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const resolveComment = async (commentId: string) => {
+    const token = localStorage.getItem("accessToken");
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/content/comments/resolve/${commentId}/`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      let data: any = null;
+
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+
+
+      if (!res.ok) {
+        let errorMessage = "Something went wrong";
+
+
+        if (data) {
+          if (typeof data === "string") {
+            errorMessage = data;
+          } else if (data.detail) {
+            errorMessage = data.detail;
+          } else if (data.message) {
+            errorMessage = data.message;
+          } else if (data.error) {
+            errorMessage = data.error;
+          } else {
+            // Handle validation errors
+            const messages: string[] = [];
+            Object.values(data).forEach((val: any) => {
+              if (Array.isArray(val)) messages.push(...val);
+              else if (typeof val === "string") messages.push(val);
+            });
+
+            if (messages.length > 0) {
+              errorMessage = messages.join(", ");
+            }
+          }
+        }
+        if (res.status === 403) {
+          errorMessage =
+            data?.detail || "You do not have permission to perform this action.";
+        }
+
+        if (res.status === 401) {
+          errorMessage = "Session expired. Please login again.";
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      toast.success("Comment resolved successfully");
+      fetchCommentHistory(id);
+
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Something went wrong");
     }
   };
 
@@ -1336,12 +1438,17 @@ const CommentSection = ({ id }: { id: string }) => {
 
   const handleSaveEdit = async (commentId: string) => {
     if (!editText.trim()) return;
+    let final = editText;
+
+    Object.entries(mentionMap).forEach(([k, v]) => {
+      final = final.replace(k, v);
+    });
     const token = localStorage.getItem('accessToken');
     try {
       const res = await fetch(`${BASE_URL}/content/comments/edit/${commentId}/`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment_text: editText }),
+        body: JSON.stringify({ comment_text: final }),
       });
       if (!res.ok) {
         if (res.status === 403) toast.error('You do not have permission to edit this comment');
@@ -1359,19 +1466,64 @@ const CommentSection = ({ id }: { id: string }) => {
 
   const addComment = async (comment: string, replyTo?: string | null) => {
     const token = localStorage.getItem('accessToken');
+
     const body: Record<string, string> = { comment_text: comment };
     if (replyTo) body.reply_to = replyTo;
+
     try {
       const res = await fetch(`${BASE_URL}/content/contents/${id}/comment/`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || 'Failed to add comment');
+
+      let data: any = null;
+
+      // Safely parse JSON (in case backend fails)
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+
+      if (!res.ok) {
+        let errorMessage = "Failed to add comment";
+
+        if (data) {
+          if (typeof data === "string") {
+            errorMessage = data;
+          } else if (data.message) {
+            errorMessage = data.message;
+          } else if (data.error) {
+            errorMessage = data.error;
+          } else if (data.detail) {
+            errorMessage = data.detail;
+          } else {
+            // Handle validation errors like { field: ["msg"] }
+            const messages: string[] = [];
+            Object.values(data).forEach((val: any) => {
+              if (Array.isArray(val)) messages.push(...val);
+              else if (typeof val === "string") messages.push(val);
+            });
+
+            if (messages.length > 0) {
+              errorMessage = messages.join(", ");
+            }
+          }
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      //  Success
+      toast.success("Comment added successfully");
       fetchCommentHistory(id);
+
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Something went wrong");
     }
   };
 
@@ -1453,8 +1605,24 @@ const CommentSection = ({ id }: { id: string }) => {
     replyText,
     replyMentionUsers,
     showReplyDropdown,
+    onResolve: resolveComment,
     onMenuToggle: setOpenMenuId,
-    onEditStart: (cid: string, text: string) => { setEditingCommentId(cid); setEditText(text); },
+    onEditStart: (cid: string, text: string) => {
+      setEditingCommentId(cid);
+
+      const mentionMap: Record<string, string> = {};
+
+      const displayText = text.replace(/@\[(.*?)\]\((.*?)\)/g, (_, name, id) => {
+        const display = `@${name}`;
+        const backend = `@[${name}](${id})`;
+
+        mentionMap[display] = backend;
+        return display;
+      });
+
+      setEditText(displayText);
+      setMentionMap(mentionMap);
+    },
     onEditTextChange: setEditText,
     onEditSave: handleSaveEdit,
     onEditCancel: () => { setEditingCommentId(null); setEditText(''); },
@@ -1465,6 +1633,7 @@ const CommentSection = ({ id }: { id: string }) => {
     onReplySubmit: handleReplySubmit,
     onReplyCancel: () => { setReplyToCommentId(null); setReplyText(''); },
     getRepliesFor,
+    onResolve: resolveComment
   };
 
   return (

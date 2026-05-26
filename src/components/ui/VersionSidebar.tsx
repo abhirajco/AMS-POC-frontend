@@ -14,7 +14,7 @@ type Props = {
 };
 
 const VersionSidebar = ({ allContent, onSelect, refreshKey }: Props) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [versions, setVersions] = useState<Record<string, any[]>>({});
 

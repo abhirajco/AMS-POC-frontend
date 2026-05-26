@@ -190,7 +190,16 @@ export default function ApprovalTextEditor({ contentTitle, contentBody, contentI
               overflowY: "auto",
               maxHeight: isFullScreen ? "calc(100vh - 180px)" : "250px",
               minHeight: isFullScreen ? "400px" : "250px",
-              padding: "12px",
+              padding: "17px",
+            },
+             "& ul, & ol": {
+              paddingLeft: "24px",
+              marginLeft: "0px",
+            },
+
+            "& li": {
+              marginTop: "4px",
+              marginBottom: "4px",
             },
           }}
         >

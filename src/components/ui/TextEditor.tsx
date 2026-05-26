@@ -21,7 +21,7 @@ type props = {
   contentTitle: string;
   contentBody: string;
   contentId: string;
-   onChange: (html: string) => void;
+  onChange: (html: string) => void;
 }
 export default function TextEditor({ contentTitle, contentBody, contentId, onChange }: props) {
 
@@ -36,11 +36,10 @@ export default function TextEditor({ contentTitle, contentBody, contentId, onCha
 
 
   const toggleLock = async () => {
-    if (!contentId) 
-      {
-    console.error("No contentId found");
-    return;
-  }
+    if (!contentId) {
+      console.error("No contentId found");
+      return;
+    }
     const token = localStorage.getItem("accessToken");
 
     try {
@@ -53,11 +52,11 @@ export default function TextEditor({ contentTitle, contentBody, contentId, onCha
         }
       );
 
-     if (!res.ok) {
-  toast.error("You do not have authority to unlock.");
-  return;
-}
-      const data =await res.json()
+      if (!res.ok) {
+        toast.error("You do not have authority to unlock.");
+        return;
+      }
+      const data = await res.json()
       console.log(data);
       setIsEditable((prev) => !prev);
 
@@ -85,6 +84,10 @@ export default function TextEditor({ contentTitle, contentBody, contentId, onCha
       }
     }
   }, [contentBody]);
+
+  useEffect(() => {
+  setTitle(contentTitle);
+}, [contentTitle]);
 
   const handleNewImageFiles = useCallback(
     (files: File[], insertPosition?: number): void => {
@@ -154,13 +157,20 @@ export default function TextEditor({ contentTitle, contentBody, contentId, onCha
 
       {/* TITLE */}
       <div className="w-full mb-4">
-        <input
+        {/* <input
           type="text"
           placeholder="Content title"
           value={contentTitle}
           onChange={(e) => setTitle(e.target.value)}
           className="border rounded border-gray-300 py-1 px-3 w-full mt-3"
-        />
+        /> */}
+        <input
+  type="text"
+  placeholder="Content title"
+  value={title}
+  onChange={(e) => setTitle(e.target.value)}
+  className="border rounded border-gray-300 py-1 px-3 w-full mt-3"
+/>
       </div>
 
       {/* EDITOR  */}
@@ -200,6 +210,15 @@ export default function TextEditor({ contentTitle, contentBody, contentId, onCha
               maxHeight: isFullScreen ? "calc(100vh - 180px)" : "250px",
               minHeight: isFullScreen ? "400px" : "250px",
               padding: "12px 19px",
+            },
+            "& ul, & ol": {
+              paddingLeft: "24px",
+              marginLeft: "0px",
+            },
+
+            "& li": {
+              marginTop: "4px",
+              marginBottom: "4px",
             },
           }}
         >

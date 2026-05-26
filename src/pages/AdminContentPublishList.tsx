@@ -96,9 +96,9 @@ const AdminContentPublishList = () => {
     return (
         <div>
             <div>
-                <HeaderSection />
+                <HeaderSection/>
                 <div>
-                    <h1 className="text-2xl text-center mt-5 mb-5">List Of content to be published</h1>
+                    <h1 className="text-2xl text-center mt-5 mb-5">List Of Content To Be Published</h1>
                 </div>
                 <div className="mt-6">
                     <div className="space-y-2.5">
