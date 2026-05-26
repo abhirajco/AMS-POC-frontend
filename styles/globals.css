@@ -187,3 +187,52 @@
 html {
   font-size: var(--font-size);
 }
+
+
+
+
+/* css for the controlling the size of cells  */
+
+
+.fc {
+  height: 100% !important;
+}
+
+.fc .fc-scrollgrid,
+.fc .fc-scrollgrid-sync-table {
+  height: 100% !important;
+}
+
+.fc .fc-daygrid-body tr {
+  height: calc(90vh / 6) !important;
+}
+
+.fc .fc-daygrid-day-frame {
+  height: 100% !important;
+}
+
+/* css for controlling the size of cells ends here  */
+
+
+/* -----------------------------------------------------------------*/
+
+
+/* css for controlling the event length which flows out of the cells  due size of text or other reasons */
+
+
+/* Ensure each day cell doesn't overflow */
+
+
+
+/* Title ko arrows ke beech centered aur fixed width do */
+/* Inner div ko target karo jo actually wrap kar raha hai */
+
+/* Arrows ko compact karo */
+
+.custom-calendar .fc-daygrid-day-frame {
+  min-height: 160px !important;
+}
+
+.custom-calendar .fc-scrollgrid-sync-table tr {
+  height: 160px !important;
+}
