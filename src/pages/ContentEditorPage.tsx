@@ -287,7 +287,6 @@ const ContentEditorPage = () => {
 
 
       <div className="mx-6 mt-4">
-        {/* Labels */}
         <div className="flex justify-between text-sm mb-1 text-gray-600">
           <span>Draft</span>
           <span>In Review</span>
@@ -295,19 +294,15 @@ const ContentEditorPage = () => {
           <span>Published</span>
         </div>
 
-        {/* Progress bar wrapper */}
         <div className="relative group w-full py-2">
 
-          {/* Track */}
           <div className="relative h-1 bg-gray-300 rounded-full">
 
-            {/* Fill */}
             <div
               className="absolute inset-y-0 left-0 h-1 bg-blue-950 rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
 
-            {/* Dots — positioned relative to the track */}
             <div className="absolute inset-y-0 left-0 w-full flex justify-between items-center">
               <div className="w-3 h-3 rounded-full bg-gray-400 -translate-y-0" />
               <div className={`w-3 h-3 rounded-full ${progressPercent >= 33 ? "bg-yellow-400" : "bg-gray-400"}`} />
@@ -316,7 +311,6 @@ const ContentEditorPage = () => {
             </div>
           </div>
 
-          {/* Tooltip */}
           <div className="absolute top-8 left-1/2 -translate-x-1/2 
           flex gap-3 items-start 
           opacity-0 group-hover:opacity-100 transition z-50 pointer-events-none">

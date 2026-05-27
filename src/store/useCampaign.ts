@@ -12,9 +12,7 @@ interface CampaignStore {
 
   fetchCampaigns: () => Promise<void>;
 
-  fetchCampaignById: (
-    campaignId: string
-  ) => Promise<void>;
+  fetchCampaignById: (campaignId: string) => Promise<void>;
   clearSelectedCampaign: () => void;
 }
 

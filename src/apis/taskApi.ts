@@ -2,7 +2,6 @@ const BASE_URL = "http://127.0.0.1:8000/api";
 
 const getToken = () => localStorage.getItem("accessToken");
 
-// Get all tasks
 export const getTasks = async () => {
   const res = await fetch(`${BASE_URL}/board/tasks/`, {
     headers: {
@@ -10,7 +9,6 @@ export const getTasks = async () => {
       Authorization: `Bearer ${getToken()}`,
     },
   });
-  // console.log(res.json())
   return await res.json();
 };
 
@@ -50,7 +48,6 @@ export const apiFetch = async (
 ) => {
   const token = localStorage.getItem("accessToken");
 
-  // ✅ DEFINE HERE
   const isFormData = options.body instanceof FormData;
 
   const res = await fetch(`${BASE_URL}${endpoint}`, {

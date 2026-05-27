@@ -67,7 +67,6 @@ export const getAllCampaign = async () => {
   }
 };
 
-
 export const createCampaign = async (campaignData: any) => {
   const token = localStorage.getItem("accessToken");
 
