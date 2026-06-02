@@ -60,7 +60,9 @@ const TagInput = ({ tags, onChange, placeholder = "Add tags (space or comma)", }
   return (
     <div
       onClick={() => inputRef.current?.focus()}
-      className=" flex flex-wrap items-center gap-2 min-h-[42px] rounded-md border border-input bg-background px-3 py-2 cursor-text focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+      //className=" flex flex-wrap items-center gap-2 min-h-[42px] rounded-md border border-input bg-background px-3 py-2 cursor-text focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+      className="flex flex-wrap items-center gap-2 min-h-[42px] rounded-md border border-gray-300 bg-background px-3 py-2 cursor-text focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+    >
       {tags.map((tag, index) => (
         <div
           key={index}

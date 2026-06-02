@@ -6,6 +6,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import SendIcon from "@mui/icons-material/Send";
 import { MentionsInput, Mention } from "react-mentions";
 import { BASE_URL } from "@/utils/BASE_URL";
+import { getCsrfToken } from "@/utils/csrf";
 
 // TYPES
 interface CommentType {
@@ -29,8 +30,6 @@ const CommentComponent: React.FC<Props> = ({ contentId, initialComments }) => {
     const [newComment, setNewComment] = useState<string>("");
     const [openDelete, setOpenDelete] = useState<boolean>(false);
 
-    const token = localStorage.getItem("accessToken");
-
     const getInitials = (name: string): string => {
         if (!name) return "U";
         return name
@@ -50,7 +49,12 @@ const CommentComponent: React.FC<Props> = ({ contentId, initialComments }) => {
             const res = await fetch(
                 `${BASE_URL}/content/contents/${contentId}/comments/history/`,
                 {
-                    headers: { Authorization: `Bearer ${token}` },
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCsrfToken(),
+                    },
                 }
             );
             const data = await res.json();
@@ -64,9 +68,10 @@ const CommentComponent: React.FC<Props> = ({ contentId, initialComments }) => {
         try {
             await fetch(`${BASE_URL}/content/contents/${contentId}/comment/`, {
                 method: "POST",
+                credentials: "include",
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken(),
                 },
                 body: JSON.stringify({ comment_text: newComment || "" }),
             });
@@ -81,9 +86,10 @@ const CommentComponent: React.FC<Props> = ({ contentId, initialComments }) => {
         try {
             await fetch(`${BASE_URL}/content/comments/edit/${id}/`, {
                 method: "PATCH",
+                credentials: "include",
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken(),
                 },
                 body: JSON.stringify({ comment_text: editText }),
             });
@@ -99,7 +105,11 @@ const CommentComponent: React.FC<Props> = ({ contentId, initialComments }) => {
         try {
             await fetch(`${BASE_URL}/content/comments/edit/${selectedId}/`, {
                 method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken(),
+                },
             });
             setOpenDelete(false);
             fetchComments();
@@ -116,7 +126,12 @@ const CommentComponent: React.FC<Props> = ({ contentId, initialComments }) => {
             const res = await fetch(
                 `${BASE_URL}/accounts/users/search/?q=${query}`,
                 {
-                    headers: { Authorization: `Bearer ${token}` },
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCsrfToken(),
+                    },
                 }
             );
             const data = await res.json();

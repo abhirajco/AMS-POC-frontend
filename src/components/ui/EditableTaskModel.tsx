@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { toast } from "sonner";
+import { getCsrfToken } from "@/utils/csrf";
 
 const EditTaskModal = ({ task, isOpen, onClose, onSuccess }: any) => {
   const [form, setForm] = useState<any>({});
@@ -24,9 +25,10 @@ const EditTaskModal = ({ task, isOpen, onClose, onSuccess }: any) => {
         `${BASE_URL}/board/tasks/${task.id}/update/`,
         {
           method: "PATCH",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            "X-CSRFToken": getCsrfToken(),
           },
           body: JSON.stringify({
             title: form.title,

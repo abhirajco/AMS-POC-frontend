@@ -10,6 +10,7 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 //import { useEffect } from "react";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { toast } from "sonner";
+import { getCsrfToken } from "@/utils/csrf";
 
 function fileListToImageFiles(fileList: FileList): File[] {
   return Array.from(fileList).filter((file) => {
@@ -40,14 +41,14 @@ export default function TextEditor({ contentTitle, contentBody, contentId, onCha
       console.error("No contentId found");
       return;
     }
-    const token = localStorage.getItem("accessToken");
-
     try {
       const res = await fetch(`${BASE_URL}/content/contents/${contentId}/lock/`,
         {
           method: "POST",
+          credentials: "include",
           headers: {
-            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
           },
         }
       );

@@ -146,7 +146,7 @@ const CreateContent = ({ open, onClose, }: CreateContentProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className=" sm:max-w-[500px] max-h-[80vh] overflow-y-auto shadow-lg rounded-xl">
+      <DialogContent className=" sm:max-w-[600px] max-h-[90vh] overflow-y-auto shadow-lg rounded-xl">
         <DialogHeader>
           <DialogTitle>Create Content</DialogTitle>
           <DialogDescription>
@@ -284,9 +284,10 @@ const CreateContent = ({ open, onClose, }: CreateContentProps) => {
 
           {/* Tags */}
           <div className="flex flex-col gap-2">
-            <Label>Tags</Label>
+            {/* <Label>Tags</Label> */}
 
             <LabeledTagInput
+             
               tags={formData.tags}
               onChange={(tags) => handleChange("tags", tags)}
             />

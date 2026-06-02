@@ -10,6 +10,7 @@ import ApprovalTextEditor from "@/components/ui/ApprovalTextEditor";
 import CommentSection from "@/components/ui/CommentSection";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckSquare } from "lucide-react";
+import { getCsrfToken } from '@/utils/csrf';
 
 const PublishPage = () => {
 
@@ -22,10 +23,14 @@ const PublishPage = () => {
     const [comments, setComments] = useState([]);
 
     const fetchContent = async () => {
-        const token = localStorage.getItem("accessToken");
 
         const res = await fetch(`${BASE_URL}/content/contents/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
+            method: "GET",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCsrfToken(),
+            },
         });
 
         const data = await res.json();
@@ -35,15 +40,16 @@ const PublishPage = () => {
 
 
     const publishContent = async () => {
-        const token = localStorage.getItem("accessToken");
+
         try {
             const response = await fetch(
                 `${BASE_URL}/content/contents/${id}/publish/`,
                 {
                     method: "POST",
+                    credentials: "include",
                     headers: {
-                        Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
+                        "X-CSRFToken": getCsrfToken(),
                     },
                     body: JSON.stringify({
                         action: "publish",

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { BASE_URL } from "@/utils/BASE_URL";
+import { getCsrfToken } from "@/utils/csrf";
 
 const CreateTaskModal = ({ isOpen, onClose, onSuccess }: any) => {
   const [loading, setLoading] = useState(false);
@@ -23,13 +24,14 @@ const CreateTaskModal = ({ isOpen, onClose, onSuccess }: any) => {
 
   const searchUsers = async (query: string) => {
   try {
-    const token = localStorage.getItem("accessToken");
-
     const res = await fetch(
       `${BASE_URL}/accounts/users/search/?q=${query}`,
       {
+        method: "GET",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
       }
     );
@@ -49,13 +51,12 @@ const CreateTaskModal = ({ isOpen, onClose, onSuccess }: any) => {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("accessToken");
-
       const res = await fetch(`${BASE_URL}/board/tasks/`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "X-CSRFToken": getCsrfToken(),
         },
         // body: JSON.stringify({
         //   title: form.title,

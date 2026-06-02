@@ -582,6 +582,7 @@ import { useState, useEffect } from "react";
 import { BASE_URL } from "@/utils/BASE_URL";
 import CreateContent from "@/components/ui/ContentHub/CreateContent";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 
 const ContentHubPage = () => {
@@ -597,20 +598,29 @@ const ContentHubPage = () => {
   const [type, setType] = useState("all");
   const [quarter, setQuarter] = useState("");
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const fetchNumberOfDifferentContent = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${BASE_URL}/content/contents/stats/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      console.log(data);
-      setStats(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+ const fetchNumberOfDifferentContent = async () => {
+  try {
+    const res = await fetch(`${BASE_URL}/content/contents/stats/`, {
+      credentials: "include",
+    });
+
+    console.log("stats status", res.status);
+console.log("stats url", res.url);
+
+    // if (res.status === 401) {
+    //   navigate("/login");
+    //   return;
+    // }
+
+    const data = await res.json();
+    console.log(data);
+    setStats(data);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const handleOpen = () => {
     setOpen(true);
@@ -685,16 +695,6 @@ const ContentHubPage = () => {
       </div>
 
       <div className="mt-4 flex justify-between">
-        {/* <div className="border rounded-3xl py-1 px-3 border-gray-300">
-          <select onChange={(e) => setStatus(e.target.value)}>
-            <option value="all">All Status</option>
-            <option value="draft">Draft</option>
-            <option value="in_review">In Review</option>
-            <option value="published">Published</option>
-            <option value="rejected">Rejected</option>
-            <option value="approved">Approved</option>
-          </select>
-        </div> */}
 
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="h-10 rounded-full border border-gray-300 px-4 text-sm">
@@ -711,25 +711,34 @@ const ContentHubPage = () => {
           </SelectContent>
         </Select>
 
-        <div className="border rounded-3xl py-1 px-3 border-gray-300">
-          <select onChange={(e) => setQuarter(e.target.value)}>
-            <option value="">All Quaters</option>
-            <option value="1">Q1</option>
-            <option value="2">Q2</option>
-            <option value="3">Q3</option>
-            <option value="4">Q4</option>
-          </select>
-        </div>
+         
 
-        <div className="border rounded-3xl py-1 px-3 border-gray-300">
-          <select onChange={(e) => setType(e.target.value)}>
-            <option value="">All Types</option>
-            <option value="case_study">Case Study</option>
-            <option value="blog">Blog</option>
-            <option value="social">Social</option>
-            <option value="white_paper">White Paper</option>
-          </select>
-        </div>
+          <Select value={quarter} onValueChange={setQuarter}>
+            <SelectTrigger className="h-10 rounded-full border border-gray-300 px-4 text-sm">
+              <SelectValue placeholder="All Quarters" />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="all">All Quarters</SelectItem>
+              <SelectItem value="1">Q1</SelectItem>
+              <SelectItem value="2">Q2</SelectItem>
+              <SelectItem value="3">Q3</SelectItem>
+              <SelectItem value="4">Q4</SelectItem>
+            </SelectContent>
+          </Select>
+        <Select value={type} onValueChange={setType}>
+  <SelectTrigger className="h-10 rounded-full border border-gray-300 px-4 text-sm">
+    <SelectValue placeholder="All Types" />
+  </SelectTrigger>
+
+  <SelectContent>
+    <SelectItem value="all">All Types</SelectItem>
+    <SelectItem value="case_study">Case Study</SelectItem>
+    <SelectItem value="blog">Blog</SelectItem>
+    <SelectItem value="social">Social</SelectItem>
+    <SelectItem value="white_paper">White Paper</SelectItem>
+  </SelectContent>
+</Select>
       </div>
 
       <div>

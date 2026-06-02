@@ -5,6 +5,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { useEffect } from "react";
+import { getCsrfToken, setCsrfToken } from "@/utils/csrf";
 import { Popover, Box, FormControl, InputLabel, Select, MenuItem, Button, Typography, TextField } from "@mui/material";
 
 type Props = {
@@ -48,47 +49,133 @@ const VersionSidebar = ({ allContent, onSelect, refreshKey }: Props) => {
   const [executives, setExecutives] = useState<any[]>([]);
   console.log(allContent)
 
+  // const createNewContent = async () => {
+  //   const token = localStorage.getItem("accessToken");
+
+  //   try {
+  //     const res = await fetch(`${BASE_URL}/content/contents/new/`, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         title,
+  //         brief,
+  //         content_type: contentType,
+  //         campaign_id: campaignId,
+  //         ...(eventId && { event_id: eventId }),
+  //         tags,
+  //         executive_id: executiveId,
+  //       }),
+  //     });
+
+  //     const data = await res.json();
+  //     console.log(data);
+
+  //     if (res.ok) {
+  //       setTitle("");
+  //       setBrief("");
+  //       setCampaignId("");
+  //       setEventId("");
+  //       setExecutiveId("");
+  //       setContentType("");
+  //       setTags("");
+
+  //       handleClose();
+  //     } else {
+  //       console.error("Error:", data);
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
+
+
   const createNewContent = async () => {
-    const token = localStorage.getItem("accessToken");
+  try {
+    const response = await fetch(`${BASE_URL}/content/contents/new/`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify({
+        title,
+        brief,
+        content_type: contentType,
+        campaign_id: campaignId,
+        ...(eventId && { event_id: eventId }),
+        tags,
+        executive_id: executiveId,
+      }),
+    });
 
-    try {
-      const res = await fetch(`${BASE_URL}/content/contents/new/`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          brief,
-          content_type: contentType,
-          campaign_id: campaignId,
-          ...(eventId && { event_id: eventId }),
-          tags,
-          executive_id: executiveId,
-        }),
-      });
+    let data: any = {};
 
-      const data = await res.json();
-      console.log(data);
+    const contentTypeHeader = response.headers.get("content-type");
 
-      if (res.ok) {
-        setTitle("");
-        setBrief("");
-        setCampaignId("");
-        setEventId("");
-        setExecutiveId("");
-        setContentType("");
-        setTags("");
-
-        handleClose();
-      } else {
-        console.error("Error:", data);
+    if (contentTypeHeader?.includes("application/json")) {
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
       }
-    } catch (err) {
-      console.error(err);
     }
-  };
+
+    if (response.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+      throw new Error(
+        data?.messages?.[0]?.message ||
+        "Session expired. Please login again."
+      );
+    }
+
+    if (response.status === 403) {
+      throw new Error(
+        data?.detail ||
+        data?.[0]?.message ||
+        "You are not authorized to perform this action."
+      );
+    }
+
+    if (response.status >= 500) {
+      throw new Error("Internal server error. Please try again later.");
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data?.details ||
+        data?.message ||
+        "Failed to create content."
+      );
+    }
+
+    console.log(data);
+
+    setTitle("");
+    setBrief("");
+    setCampaignId("");
+    setEventId("");
+    setExecutiveId("");
+    setContentType("");
+    setTags("");
+
+    handleClose();
+  } catch (error: any) {
+    if (
+      error instanceof TypeError &&
+      error.message === "Failed to fetch"
+    ) {
+      console.error("Network error. Please check your internet connection.");
+      return;
+    }
+
+    console.error("Error creating content:", error);
+  }
+};
 
   const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -98,55 +185,228 @@ const VersionSidebar = ({ allContent, onSelect, refreshKey }: Props) => {
     setAnchorEl(null);
   };
 
-  const fetchCampaigns = async () => {
-    const token = localStorage.getItem("accessToken");
-    const res = await fetch(`${BASE_URL}/board/campaigns/`, {
-      headers: { Authorization: `Bearer ${token}` },
+  // const fetchCampaigns = async () => {
+  //   const token = localStorage.getItem("accessToken");
+  //   const res = await fetch(`${BASE_URL}/board/campaigns/`, {
+  //     headers: { Authorization: `Bearer ${token}` },
+  //   });
+  //   const data = await res.json();
+  //   setCampaigns(data);
+  // };
+
+
+const fetchCampaigns = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/board/campaigns/`, {
+      method: "GET",
+      credentials: "include",
+      headers:
+      {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
     });
-    const data = await res.json();
+
+    if (response.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+      throw new Error("Session expired. Please login again.");
+    }
+
+    if (response.status === 403) {
+      throw new Error("You are not authorized to view campaigns.");
+    }
+
+    if (response.status >= 500) {
+      throw new Error("Internal server error. Please try again later.");
+    }
+
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      throw new Error(
+        errorMessage ||
+          `Failed to fetch campaigns. Status: ${response.status}`
+      );
+    }
+
+    const data = await response.json();
     setCampaigns(data);
-  };
+  } catch (error) {
+    console.error("Error fetching campaigns:", error);
+  }
+};
+
+  // const fetchEvents = async (id: string) => {
+  //   const token = localStorage.getItem("accessToken");
+  //   const res = await fetch(
+  //     `${BASE_URL}/board/campaigns/${id}/events/`,
+  //     { headers: { Authorization: `Bearer ${token}` } }
+  //   );
+  //   const data = await res.json();
+  //   setEvents(data.events || []);
+  // };
 
   const fetchEvents = async (id: string) => {
-    const token = localStorage.getItem("accessToken");
-    const res = await fetch(
+  try {
+    const response = await fetch(
       `${BASE_URL}/board/campaigns/${id}/events/`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
+      }
     );
-    const data = await res.json();
+
+    if (response.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+      throw new Error("Session expired. Please login again.");
+    }
+
+    if (response.status === 403) {
+      throw new Error("You are not authorized to view events.");
+    }
+
+    if (response.status >= 500) {
+      throw new Error("Internal server error. Please try again later.");
+    }
+
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      throw new Error(
+        errorMessage ||
+          `Failed to fetch events. Status: ${response.status}`
+      );
+    }
+
+    const data = await response.json();
     setEvents(data.events || []);
-  };
+  } catch (error) {
+    console.error("Error fetching events:", error);
+  }
+};
+
+  // const fetchExecutives = async () => {
+  //   const token = localStorage.getItem("accessToken");
+  //   const res = await fetch(`${BASE_URL}/content/contents/exe`, {
+  //     headers: { Authorization: `Bearer ${token}` },
+  //   });
+  //   const data = await res.json();
+  //   setExecutives(data);
+  // };
+
 
   const fetchExecutives = async () => {
-    const token = localStorage.getItem("accessToken");
-    const res = await fetch(`${BASE_URL}/content/contents/exe`, {
-      headers: { Authorization: `Bearer ${token}` },
+  try {
+    const response = await fetch(`${BASE_URL}/content/contents/exe`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
     });
-    const data = await res.json();
+
+    if (response.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+      throw new Error("Session expired. Please login again.");
+    }
+
+    if (response.status === 403) {
+      throw new Error("You are not authorized to view executives.");
+    }
+
+    if (response.status >= 500) {
+      throw new Error("Internal server error. Please try again later.");
+    }
+
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      throw new Error(
+        errorMessage ||
+          `Failed to fetch executives. Status: ${response.status}`
+      );
+    }
+
+    const data = await response.json();
     setExecutives(data);
-  };
+  } catch (error) {
+    console.error("Error fetching executives:", error);
+  }
+};
+
+  // const fetchAllVersion = async (contentId: string) => {
+  //   const token = localStorage.getItem("accessToken");
+
+  //   try {
+  //     const res = await fetch(
+  //       `${BASE_URL}/content/contents/${contentId}/history/`,
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+
+  //     const data = await res.json();
+  //     console.log(data);
+  //     setVersions((prev) => ({
+  //       ...prev,
+  //       [contentId]: data.history || [],
+  //     }));
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
 
   const fetchAllVersion = async (contentId: string) => {
-    const token = localStorage.getItem("accessToken");
+  try {
+    const response = await fetch(
+      `${BASE_URL}/content/contents/${contentId}/history/`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
+      }
+    );
 
-    try {
-      const res = await fetch(
-        `${BASE_URL}/content/contents/${contentId}/history/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const data = await res.json();
-      console.log(data);
-      setVersions((prev) => ({
-        ...prev,
-        [contentId]: data.history || [],
-      }));
-    } catch (err) {
-      console.error(err);
+    if (response.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+      throw new Error("Session expired. Please login again.");
     }
-  };
+
+    if (response.status === 403) {
+      throw new Error("You are not authorized to view version history.");
+    }
+
+    if (response.status >= 500) {
+      throw new Error("Internal server error. Please try again later.");
+    }
+
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      throw new Error(
+        errorMessage ||
+          `Failed to fetch version history. Status: ${response.status}`
+      );
+    }
+
+    const data = await response.json();
+
+    setVersions((prev) => ({
+      ...prev,
+      [contentId]: data.history || [],
+    }));
+  } catch (error) {
+    console.error("Error fetching version history:", error);
+  }
+};
 
   const handleClick = async (contentId: string) => {
     // toggle dropdown
