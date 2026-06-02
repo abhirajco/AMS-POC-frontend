@@ -13,6 +13,7 @@ import TextEditor from '@/components/ui/TextEditor';
 import VersionSidebar from "@/components/ui/VersionSidebar";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { useLocation } from "react-router-dom";
+import { getCsrfToken } from "@/utils/csrf";
 const GenerateContentPage = () => {
 
   const [description, setDescription] = useState('');
@@ -44,8 +45,6 @@ const GenerateContentPage = () => {
   };
 
   const handleSubmitContent = async () => {
-    const token = localStorage.getItem("accessToken");
-
     if (!contentId) {
       toast.error("No content selected");
       return;
@@ -55,9 +54,10 @@ const GenerateContentPage = () => {
       // STEP 1: SAVE
       const saveRes = await fetch(`${BASE_URL}/content/contents/save/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           content_id: contentId,
@@ -78,9 +78,10 @@ const GenerateContentPage = () => {
       //  STEP 2: SUBMIT (only if save success)
       const submitRes = await fetch(`${BASE_URL}/content/contents/submit/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           content_id: contentId,
@@ -107,8 +108,6 @@ const GenerateContentPage = () => {
   };
 
   const handleSaveVersion = async () => {
-    const token = localStorage.getItem("accessToken");
-
     if (!contentId) {
       toast.error("No content selected");
       return;
@@ -118,9 +117,10 @@ const GenerateContentPage = () => {
       // SAVE
       const res = await fetch(`${BASE_URL}/content/contents/save/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           content_id: contentId,
@@ -149,12 +149,12 @@ const GenerateContentPage = () => {
 
   const unlockContent = async (id: string) => {
     try {
-      const token = localStorage.getItem("accessToken"); //get token
-
       await fetch(`http://127.0.0.1:8000/api/content/contents/${id}/lock/`, {
         method: "DELETE",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
       });
 
@@ -173,8 +173,6 @@ const GenerateContentPage = () => {
   };
 
   const fetchVersionDetails = async (contentId: string, versionId?: string) => {
-    const token = localStorage.getItem("accessToken");
-
     try {
       let url = "";
 
@@ -185,7 +183,12 @@ const GenerateContentPage = () => {
       }
 
       const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
       });
 
       const data = await res.json();
@@ -202,13 +205,15 @@ const GenerateContentPage = () => {
   };
 
   const fetchParticularContent = async (contentId:any) => {
-    //setContentId(id);
     try {
-      const token = localStorage.getItem("accessToken")
       const res = await fetch(`${BASE_URL}/content/contents/${contentId}`,
         {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
+          },
         })
       const data = await res.json();
       setContentTitle(data.title);

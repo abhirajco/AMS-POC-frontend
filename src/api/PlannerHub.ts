@@ -1,21 +1,15 @@
 import { BASE_URL } from "@/utils/BASE_URL";
 import { toast } from "sonner";
+import { getCsrfToken } from "@/utils/csrf";
 
 export const getAllTasks = async () => {
   try {
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      localStorage.clear();
-      window.location.href ="/login";
-      return;
-    }
-
     const res = await fetch(`${BASE_URL}/board/tasks/`, {
       method: "GET",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        "X-CSRFToken": getCsrfToken(),
       },
     });
 

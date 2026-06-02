@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BASE_URL } from "@/utils/BASE_URL";
+import { setCsrfToken } from "@/utils/csrf";
 
 const LoginForm = ({
   onLogin,
@@ -25,85 +26,214 @@ const LoginForm = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
- 
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
 
-    if (!email.trim()) {
-      setError("Email is required");
-      return;
-    }
+  
 
-    if (!password.trim()) {
-      setError("Password is required");
-      return;
-    }
+// const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+//   e.preventDefault();
 
-    setIsLoading(true);
-    setError("");
+//   setError("");
+
+//   if (!email.trim()) {
+//     setError("Email is required");
+//     return;
+//   }
+
+//   if (!password.trim()) {
+//     setError("Password is required");
+//     return;
+//   }
+
+//   setIsLoading(true);
+
+//   try {
+//     const response = await fetch(`${BASE_URL}/accounts/login/`, {
+//       method: "POST",
+
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+
+//        credentials: "include",
+
+//       body: JSON.stringify({
+//         email: email.trim(),
+//         password,
+//       }),
+//     });
+
+//     let data;
+
+//     try {
+//       data = await response.json();
+//     } catch {
+//       throw new Error("Invalid server response");
+//     }
+
+//     console.log("Login Response:", data);
+
+//     if (Array.isArray(data)) {
+//       setError(data[0]);
+//       return;
+//     }
+
+//     if (!response.ok) {
+//       setError(data?.message || "Login failed");
+//       return;
+//     }
+
+//     if (!data?.user) {
+//       setError("User data not found");
+//       return;
+//     }
+
+//     const userData: User = {
+//       id: data.user.id,
+//       email: data.user.email,
+//       full_name: data.user.full_name,
+//       group: data.user.group,
+//       role: data.user.role,
+//     };
+
+//     localStorage.setItem("user", JSON.stringify(userData));
+
+//     onLogin({
+//       email: data.user.email,
+//       name: data.user.full_name,
+//       role: data.user.role,
+//       rememberMe,
+//     });
+
+//     navigate("/");
+
+//   } catch (error) {
+//     console.error("Login Error:", error);
+
+//     if (error instanceof TypeError) {
+//       setError("Network error. Please check your internet connection.");
+//     } else {
+//       setError("Something went wrong. Please try again.");
+//     }
+//   } finally {
+//     setIsLoading(false);
+//   }
+// };
+
+type User = {
+  id: string;
+  email: string;
+  full_name: string;
+  group: string;
+  role: string;
+};
+
+const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+
+  setError("");
+
+  if (!email.trim()) {
+    setError("Email is required");
+    return;
+  }
+
+  if (!password.trim()) {
+    setError("Password is required");
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const response = await fetch(`${BASE_URL}/accounts/login/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", 
+      body: JSON.stringify({
+        email: email.trim(),
+        password,
+      }),
+    });
+
+    let data;
+    console.log("Response Headers");
+console.log([...response.headers.entries()]);
 
     try {
-      const response = await fetch(`${BASE_URL}/accounts/login/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      console.log("Login Response:", data);
-
-      //  validation errors from backend
-      if (Array.isArray(data)) {
-        setError(data[0]);
-        setIsLoading(false);
-        return;
-      }
-
-      //  invalid credentials
-      if (!data.access) {
-        setError("Invalid email or password");
-        setIsLoading(false);
-        return;
-      }
-
-      //  store tokens
-      localStorage.setItem("accessToken", data.access);
-      localStorage.setItem("refreshToken", data.refresh);
-
-      //  store user data
-      if (data.user)
-      {
-        const userData =
-       {
-        full_name: data.user.full_name,
-        email: data.user.email,
-        role: data.user.role,
-       };
-
-         localStorage.setItem("user", JSON.stringify(userData));
-      }
-
-      //  pass data to parent
-      onLogin({
-        email: data.user?.email || email,
-        name: data.user?.full_name || "User",
-        role: data.user?.role || "marketing-head",
-        rememberMe: rememberMe,
-      });
-
-      //  redirect to home
-      navigate("/");
-
-    } catch (err) {
-      setError("Server error. Please try again.");
-    } finally {
-      setIsLoading(false);
+      data = await response.json();
+    } catch {
+      throw new Error("Invalid server response");
     }
-  };
+
+    console.log("Login Response:", data);
+
+    // Backend validation errors
+    if (Array.isArray(data)) {
+      setError(data[0]);
+      return;
+    }
+
+    if (!response.ok) {
+      setError(
+        data?.error ||
+        data?.message ||
+        data?.detail ||
+        "Login failed"
+      );
+      return;
+    }
+
+    if (!data?.user) {
+      setError("User data not found");
+      return;
+    }
+
+    // Optional role validation
+    // if (
+    //   data.user.role !== "admin" &&
+    //   data.user.role !== "exec_approver"
+    // ) {
+    //   setError("Unauthorized user");
+    //   return;
+    // }
+
+    const userData: User = {
+      id: data.user.id,
+      email: data.user.email,
+      full_name: data.user.full_name,
+      group: data.user.group,
+      role: data.user.role,
+    };
+
+    // Store only non-sensitive user info
+    localStorage.setItem("user", JSON.stringify(userData));
+    setCsrfToken(data.csrfToken);
+
+    onLogin({
+      email: userData.email,
+      name: userData.full_name,
+      role: userData.role,
+      rememberMe,
+    });
+
+    navigate("/");
+
+  } catch (error) {
+    console.error("Login Error:", error);
+
+    if (error instanceof TypeError) {
+      setError("Network error. Please check your internet connection.");
+    } else {
+      setError("Something went wrong. Please try again.");
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
+ 
 
   return (
     <div className="w-full max-w-md font-montserrat mx-auto mt-10">

@@ -8,18 +8,22 @@ export const normalizeStatus = (status: string): string =>
 };
 
 export const getStatusBadge = (item: any) => {
-  const normalizedStatus = normalizeStatus(item?.status);
-  switch (normalizedStatus) {
-    case 'draft':
-      return <Badge variant="secondary" className="bg-gray-100 text-black">Draft</Badge>;
-    case 'in-review':
-      return <Badge className="bg-blue-600 text-white">In review</Badge>;
-    case 'published':
-      return <Badge variant="secondary" className="bg-gray-200 text-black">Published</Badge>;
-    default:
-      return <Badge variant="outline">{item?.status}</Badge>;
-  }
-};
+        const normalizedStatus = normalizeStatus(item?.status);
+        switch (normalizedStatus) {
+            case 'draft':
+                return <Badge variant="secondary" className="bg-gray-100 text-black">Draft</Badge>;
+            case 'in_review':
+                return <Badge className="bg-blue-600 text-white">In review</Badge>;
+            case 'published':
+                return <Badge variant="secondary" className="bg-green-500 text-white">Published</Badge>;
+            case 'approved':
+                return <Badge variant="secondary" className="bg-yellow-400 text-black">Approved</Badge>;
+            case 'rejected':
+                return <Badge variant="secondary" className="bg-red-600 text-white">Rejected</Badge>;
+            default:
+                return <Badge variant="outline">{item?.status}</Badge>;
+        }
+    };
 
 export const getProofPointStatusBadge = (status: string) => {
   switch (status) {

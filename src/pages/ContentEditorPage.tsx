@@ -7,6 +7,7 @@ import { Card, CardContent } from "../components/ui/card";
 import CommentSection from "@/components/ui/CommentSection"
 import { toast } from "sonner"
 import VersionSidebar from "@/components/ui/VersionSidebar"
+import { getCsrfToken } from "@/utils/csrf"
 
 const ContentEditorPage = () => {
 
@@ -80,16 +81,15 @@ const ContentEditorPage = () => {
 
 
   const fetchContentHistory = async (id: string) => {
-    const token = localStorage.getItem("accessToken");
-
     try {
       const response = await fetch(
         `${BASE_URL}/content/contents/${id}/history2/`,
         {
           method: "GET",
+          credentials: "include",
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
           },
         }
       );
@@ -108,8 +108,6 @@ const ContentEditorPage = () => {
   };
 
   const handleSubmitContent = async () => {
-    const token = localStorage.getItem("accessToken");
-
     if (!contentId) {
       toast.error("No content selected");
       return;
@@ -119,9 +117,10 @@ const ContentEditorPage = () => {
       //SAVE
       const saveRes = await fetch(`${BASE_URL}/content/contents/save/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           content_id: contentId,
@@ -129,7 +128,6 @@ const ContentEditorPage = () => {
           body: contentBody,
         }),
       });
-      // console.log(contentId, selectedTitle, selectedBody);
 
       const saveData = await saveRes.json();
 
@@ -142,9 +140,10 @@ const ContentEditorPage = () => {
       //  STEP 2: SUBMIT (only if save success)
       const submitRes = await fetch(`${BASE_URL}/content/contents/submit/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           content_id: contentId,
@@ -169,8 +168,6 @@ const ContentEditorPage = () => {
   };
 
   const handleSaveVersion = async () => {
-    const token = localStorage.getItem("accessToken");
-
     if (!contentId) {
       toast.error("No content selected");
       return;
@@ -180,9 +177,10 @@ const ContentEditorPage = () => {
       // SAVE
       const res = await fetch(`${BASE_URL}/content/contents/save/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           content_id: contentId,
@@ -209,8 +207,6 @@ const ContentEditorPage = () => {
   };
 
   const fetchVersionDetails = async (contentId: string, versionId?: string) => {
-    const token = localStorage.getItem("accessToken");
-
     try {
       let url = "";
 
@@ -221,7 +217,12 @@ const ContentEditorPage = () => {
       }
 
       const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
       });
 
       const data = await res.json();
@@ -254,11 +255,14 @@ const ContentEditorPage = () => {
   const fetchParticularContent = async (id: string) => {
     setContentId(id);
     try {
-      const token = localStorage.getItem("accessToken")
       const res = await fetch(`${BASE_URL}/content/contents/${id}`,
         {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
+          },
         })
       const data = await res.json();
       setContentTitle(data.title);

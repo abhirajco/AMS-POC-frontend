@@ -427,6 +427,7 @@ import ApprovalTextEditor from "@/components/ui/ApprovalTextEditor";
 import CommentSection from "@/components/ui/CommentSection";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckSquare } from "lucide-react";
+import { getCsrfToken } from "@/utils/csrf";
 
 const ContentApprovalPage = () => {
 
@@ -440,17 +441,17 @@ const ContentApprovalPage = () => {
 
 
   const rejectContent = async () => {
-    const token = localStorage.getItem("accessToken");
 
     try {
       const res = await fetch(
         `${BASE_URL}/content/contents/${id}/reject/`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+           credentials: "include",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": getCsrfToken(),
+                },
           body: JSON.stringify({
             action: "reject",
             reason: reason,
@@ -493,17 +494,17 @@ const ContentApprovalPage = () => {
   //   }
   // };
   const handleApprove = async () => {
-  const token = localStorage.getItem("accessToken");
 
   try {
     const res = await fetch(
       `${BASE_URL}/content/contents/${id}/approve/`,
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
         body: JSON.stringify({ action: "approve" }),
       }
     );
@@ -526,10 +527,13 @@ const ContentApprovalPage = () => {
 };
 
   const fetchContent = async () => {
-    const token = localStorage.getItem("accessToken");
-
     const res = await fetch(`${BASE_URL}/content/contents/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
+     method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
     });
 
     const data = await res.json();
@@ -551,12 +555,20 @@ const ContentApprovalPage = () => {
         <div className="flex-1">
           <Card className="bg-white border border-gray-300">
             <CardContent className="p-3 sm:p-4">
-              <ApprovalTextEditor
+              {id && (
+  <ApprovalTextEditor
+    contentTitle={title}
+    contentBody={body}
+    contentId={id}
+    onChange={(value) => setBody(value)}
+  />
+)}
+              {/* <ApprovalTextEditor
                 contentTitle={title}
                 contentBody={body}
                 contentId={id}
                 onChange={(value) => setBody(value)}
-              />
+              /> */}
               <div className="mt-4 flex justify-between">
                 <button
                   onClick={handleApprove}

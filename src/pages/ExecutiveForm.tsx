@@ -3,6 +3,7 @@ import { BASE_URL } from "@/utils/BASE_URL";
 import { useEffect, useState } from "react";
 import { Box, TextField, Button, MenuItem, Select, InputLabel, FormControl, Typography, } from "@mui/material";
 import { toast } from "sonner";
+import { getCsrfToken } from "@/utils/csrf";
 
 
 const ExecutiveForm = () => {
@@ -52,9 +53,13 @@ const ExecutiveForm = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
       const res = await fetch(`${BASE_URL}/board/campaigns/`, {
-        headers: { Authorization: `Bearer ${token}` },
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
       });
       const data = await res.json();
       if (!res.ok) {
@@ -71,11 +76,15 @@ const ExecutiveForm = () => {
 
   const fetchEvents = async (campaignId: string) => {
     try {
-      const token = localStorage.getItem("accessToken");
       const res = await fetch(
         `${BASE_URL}/board/campaigns/${campaignId}/events/`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
+          },
         }
       );
       const data = await res.json();
@@ -88,9 +97,13 @@ const ExecutiveForm = () => {
 
   const fetchSME = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
       const res = await fetch(`${BASE_URL}/content/contents/sme`, {
-        headers: { Authorization: `Bearer ${token}` }
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
       })
       const data = await res.json();
       setSmeList(data);
@@ -135,16 +148,15 @@ const ExecutiveForm = () => {
   const createContent = async () => {
     if (!validateForm()) return;
 
-    setLoading(true); //
+    setLoading(true);
 
     try {
-      const token = localStorage.getItem("accessToken");
-
       const res = await fetch(`${BASE_URL}/content/contents/initiate/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           title,

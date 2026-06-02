@@ -1,37 +1,85 @@
 import { BASE_URL } from "@/utils/BASE_URL";
+import { getCsrfToken } from "@/utils/csrf";
+import { toast } from "sonner";
 
 export const getAllExecutive = async () => {
-  
-  const token = localStorage.getItem("accessToken");
-
-  if (!token)
-  {
-    localStorage.clear();
-    window.location.href = "/login";
-    throw new Error("Authentication token not found.");
-  }
-
   try {
-    const response = await fetch(`${BASE_URL}/content/contents/exe`,
-      {
-        method: "GET",
-        headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await fetch(`${BASE_URL}/content/contents/exe`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
         "Content-Type": "application/json",
-        },
-      }
-    );
+        "X-CSRFToken": getCsrfToken(),
+      },
+    });
+
+    if (response.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+      throw new Error("Session expired. Please login again.");
+    }
+
+    if (response.status === 403) {
+      throw new Error("You are not authorized to view executives.");
+    }
+
+    if (response.status >= 500) {
+      toast.error("Internal server error. Please try again later.");
+      throw new Error("Internal server error.");
+    }
 
     if (!response.ok) {
       const errorMessage = await response.text();
-      throw new Error(errorMessage ||`Failed to fetch executives. Status: ${response.status}`);
+      throw new Error(errorMessage || `Failed to fetch executives. Status: ${response.status}`);
     }
 
     const data = await response.json();
-
     return data;
+
   } catch (error) {
     console.error("Error fetching executives:", error);
+    throw error;
+  }
+};
+
+
+export const getAllWriter = async () => {
+  try {
+    const res = await fetch(`${BASE_URL}/content/contents/writer`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+    });
+
+    if (res.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.detail || "Session expired. Please login again.");
+    }
+
+    if (res.status === 403) {
+      throw new Error("You are not authorized to view writers.");
+    }
+
+    if (res.status >= 500) {
+      toast.error("Internal server error. Please try again later.");
+      throw new Error("Internal server error.");
+    }
+
+    if (!res.ok) {
+      const errorMessage = await res.text();
+      throw new Error(errorMessage || `Failed to fetch writers. Status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data;
+
+  } catch (error) {
+    console.error("Error fetching writers:", error);
     throw error;
   }
 };

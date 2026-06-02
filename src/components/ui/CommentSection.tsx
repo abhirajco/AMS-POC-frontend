@@ -972,6 +972,7 @@
 
 import { BASE_URL } from '@/utils/BASE_URL'
 import { useState, useEffect, useRef, memo } from 'react';
+import { getCsrfToken } from '@/utils/csrf';
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageSquare, MoreVertical, Pencil, Trash2, CornerDownRight, CheckSquare } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
@@ -1317,12 +1318,15 @@ const CommentSection = ({ id }: { id: string }) => {
   };
 
   const fetchCommentHistory = async (contentId: string) => {
-    const token = localStorage.getItem('accessToken');
     if (!contentId) return;
     try {
       const res = await fetch(
         `${BASE_URL}/content/contents/${contentId}/comments/history/`,
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+        {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
+        }
       );
       if (!res.ok) throw new Error('Failed to fetch comment history');
       const data = await res.json();
@@ -1334,16 +1338,15 @@ const CommentSection = ({ id }: { id: string }) => {
   };
 
   const resolveComment = async (commentId: string) => {
-    const token = localStorage.getItem("accessToken");
-
     try {
       const res = await fetch(
         `${BASE_URL}/content/comments/resolve/${commentId}/`,
         {
           method: "PATCH",
+          credentials: "include",
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
           },
         }
       );
@@ -1405,10 +1408,11 @@ const CommentSection = ({ id }: { id: string }) => {
   };
 
   const fetchUsers = async (query: string, setter: (u: User[]) => void) => {
-    const token = localStorage.getItem('accessToken');
     try {
       const res = await fetch(`${BASE_URL}/accounts/users/search/?q=${query}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
       });
       setter(await res.json());
     } catch (err) {
@@ -1417,11 +1421,11 @@ const CommentSection = ({ id }: { id: string }) => {
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    const token = localStorage.getItem('accessToken');
     try {
       const res = await fetch(`${BASE_URL}/content/comments/edit/${commentId}/`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
       });
       if (!res.ok) {
         if (res.status === 403) toast.error('You do not have permission to delete this comment');
@@ -1443,11 +1447,11 @@ const CommentSection = ({ id }: { id: string }) => {
     Object.entries(mentionMap).forEach(([k, v]) => {
       final = final.replace(k, v);
     });
-    const token = localStorage.getItem('accessToken');
     try {
       const res = await fetch(`${BASE_URL}/content/comments/edit/${commentId}/`, {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        credentials: "include",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
         body: JSON.stringify({ comment_text: final }),
       });
       if (!res.ok) {
@@ -1465,17 +1469,16 @@ const CommentSection = ({ id }: { id: string }) => {
   };
 
   const addComment = async (comment: string, replyTo?: string | null) => {
-    const token = localStorage.getItem('accessToken');
-
     const body: Record<string, string> = { comment_text: comment };
     if (replyTo) body.reply_to = replyTo;
 
     try {
       const res = await fetch(`${BASE_URL}/content/contents/${id}/comment/`, {
         method: 'POST',
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify(body),
       });

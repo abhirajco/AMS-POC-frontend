@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { BASE_URL } from "@/utils/BASE_URL";
+import { getCsrfToken } from "@/utils/csrf";
 
 interface CreateContentPayload {
   title: string;
@@ -22,12 +23,6 @@ interface AssignSmeResponse {
   detail?: string;
 }
 
-interface ApiError {
-  status: number;
-  message: string;
-  data?: any;
-}
-
 export interface ContentFilters {
   status?: string;
   content_type?: string;
@@ -40,25 +35,16 @@ export interface ContentFilters {
 
 
 export const createContent = async (payload: CreateContentPayload) => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    toast.error("Session expired. Please login again.");
-    localStorage.clear();
-    window.location.href = "/login";
-  }
-
   try {
-    const response = await fetch(`${BASE_URL}/content/contents/new/`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      }
-    );
+    const response = await fetch(`${BASE_URL}/content/contents/new/`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify(payload),
+    });
 
     let data: any = {};
 
@@ -85,7 +71,11 @@ export const createContent = async (payload: CreateContentPayload) => {
     }
 
     if (response.status === 403) {
-      toast.error(data?.detail || data?.[0]?.message ||"You are not authorized to perform this action.");
+      toast.error(
+        data?.detail ||
+        data?.[0]?.message ||
+        "You are not authorized to perform this action."
+      );
 
       throw {
         status: 403,
@@ -109,7 +99,7 @@ export const createContent = async (payload: CreateContentPayload) => {
 
       throw {
         status: response.status,
-        message:data?.details || data?.message || "Request failed",
+        message: data?.details || data?.message || "Request failed",
         data,
       } as ApiError;
     }
@@ -117,7 +107,6 @@ export const createContent = async (payload: CreateContentPayload) => {
     return data;
 
   } catch (error: any) {
-
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       toast.error("Network error. Please check your internet connection.");
 
@@ -132,7 +121,10 @@ export const createContent = async (payload: CreateContentPayload) => {
 };
 
 
-export const assignSme = async (contentId: string, executiveId: string): Promise<AssignSmeResponse> => {
+export const assignSme = async (
+  contentId: string,
+  executiveId: string
+): Promise<AssignSmeResponse> => {
 
   if (!contentId) {
     throw {
@@ -148,27 +140,19 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
     } as ApiError;
   }
 
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    localStorage.clear();
-    window.location.href = "/login";
-    throw {
-      status: 401,
-      message: "Access token missing",
-    } as ApiError;
-  }
-
   try {
-
-    const response = await fetch(`${BASE_URL}/content/contents/${contentId}/assign-sme/`,
+    const response = await fetch(
+      `${BASE_URL}/content/contents/${contentId}/assign-sme/`,
       {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
-        body: JSON.stringify({executive_id: executiveId,}),
+        body: JSON.stringify({
+          executive_id: executiveId,
+        }),
       }
     );
 
@@ -184,10 +168,14 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
     }
 
     if (response.status === 401 || data?.code === "token_not_valid") {
+      const tokenMessage =
+        data?.messages?.[0]?.message ||
+        data?.detail ||
+        "Session expired";
 
-      const tokenMessage = data?.messages?.[0]?.message || data?.detail ||"Session expired";
       localStorage.clear();
       window.location.href = "/login";
+
       throw {
         status: 401,
         message: tokenMessage,
@@ -196,8 +184,10 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
     }
 
     if (response.status === 403) {
-      const message = data?.detail || "You do not have permission to perform this action.";
+      const message =
+        data?.detail || "You do not have permission to perform this action.";
       toast.error(message);
+
       throw {
         status: 403,
         message,
@@ -206,9 +196,9 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
     }
 
     if (response.status === 400) {
-
       const message = data?.detail || data?.message || "Invalid request.";
       toast.error(message);
+
       throw {
         status: 400,
         message,
@@ -217,7 +207,6 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
     }
 
     if (response.status === 404) {
-
       const message = data?.detail || "Requested resource not found.";
 
       throw {
@@ -228,8 +217,7 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
     }
 
     if (response.status >= 500) {
-
-      toast.error( "Server error occurred. Please try again later.");
+      toast.error("Server error occurred. Please try again later.");
 
       throw {
         status: response.status,
@@ -239,7 +227,6 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
     }
 
     if (!response.ok) {
-
       const message =
         data?.detail ||
         data?.message ||
@@ -251,6 +238,7 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
         data,
       } as ApiError;
     }
+
     return data;
 
   } catch (error: any) {
@@ -265,6 +253,7 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
 
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       toast.error("Network error. Check your internet connection.");
+
       throw {
         status: 0,
         message: "Network Error",
@@ -277,14 +266,6 @@ export const assignSme = async (contentId: string, executiveId: string): Promise
 
 
 export const getAllContents = async (filters: ContentFilters) => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    localStorage.clear();
-    window.location.href = "/login";
-    throw new Error("Authentication required");
-  }
-
   const params = new URLSearchParams();
 
   Object.entries(filters).forEach(([key, value]) => {
@@ -302,18 +283,13 @@ export const getAllContents = async (filters: ContentFilters) => {
     `${BASE_URL}/content/contents/filter/?${params.toString()}`,
     {
       method: "GET",
+      credentials: "include",
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
       },
     }
   );
-
-  if (response.status === 401 || response.status === 403) {
-    localStorage.clear();
-    window.location.href = "/login";
-    throw new Error("Session expired");
-  }
 
   if (response.status === 404) {
     throw new Error("Content not found");
@@ -338,24 +314,15 @@ export const getAllContents = async (filters: ContentFilters) => {
 
 
 export const getContentById = async (id: string) => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    localStorage.clear();
-    window.location.href = "/login";
-    throw new Error("Authentication required");
-  }
-
   try {
-    const response = await fetch(`${BASE_URL}/content/contents/${id}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await fetch(`${BASE_URL}/content/contents/${id}`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+    });
 
     if (response.status === 401) {
       localStorage.clear();
@@ -363,10 +330,8 @@ export const getContentById = async (id: string) => {
       throw new Error("Session expired. Please login again.");
     }
 
-    if (response.status === 403)
-    {
+    if (response.status === 403) {
       localStorage.clear();
-      window.location.href = "/login";
       throw new Error("Unauthorized access.");
     }
 
@@ -380,10 +345,16 @@ export const getContentById = async (id: string) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
-      throw new Error( errorData?.message || errorData?.detail || "Failed to fetch content.");
+      throw new Error(
+        errorData?.message ||
+        errorData?.detail ||
+        "Failed to fetch content."
+      );
     }
+
     const data = await response.json();
     return data;
+
   } catch (error) {
     console.error("getContentById Error:", error);
     throw error;
