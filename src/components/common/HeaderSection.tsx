@@ -51,7 +51,7 @@ const HeaderSection = () => {
           </IconButton>
 
           {/* DROPDOWN MENU */}
-          <Menu
+          {/* <Menu
             anchorEl={anchorEl}
             open={open}
             onClose={handleClose}
@@ -95,7 +95,57 @@ const HeaderSection = () => {
               Approved Contents
             </MenuItem>
 
-          </Menu>
+          </Menu> */}
+          <Menu
+  anchorEl={anchorEl}
+  open={open}
+  onClose={handleClose}
+  PaperProps={{
+    style: {
+      width: 150,
+      borderRadius: 10,
+    },
+  }}
+>
+  <MenuItem
+    onClick={() => navigate("/content-brief-list")}
+    sx={{
+      justifyContent: "flex-start",
+      alignItems: "center",
+      py: 1,
+      color: "text.secondary",
+      textAlign: "left",
+    }}
+  >
+    Content Brief List
+  </MenuItem>
+
+  <MenuItem
+    onClick={handleNavigate}
+    sx={{
+      justifyContent: "flex-start",
+      alignItems: "center",
+      py: 1,
+      color: "text.secondary",
+      textAlign: "left",
+    }}
+  >
+    Contents to Review
+  </MenuItem>
+
+  <MenuItem
+    onClick={() => navigate("/approved-content")}
+    sx={{
+      justifyContent: "flex-start",
+      alignItems: "center",
+      py: 1,
+      color: "text.secondary",
+      textAlign: "left",
+    }}
+  >
+    Approved Contents
+  </MenuItem>
+</Menu>
 
         </div>
       </div>

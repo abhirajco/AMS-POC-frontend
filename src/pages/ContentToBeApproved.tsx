@@ -183,6 +183,8 @@ import { Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { normalizeStatus } from "@/utils/helpers";
 import { Divider } from "@mui/material";
+import { getStatusBadge } from "@/utils/helpers";
+import { getCsrfToken } from "@/utils/csrf";
 
 const ContentToBeApproved = () => {
   type Content = {
@@ -219,53 +221,54 @@ const ContentToBeApproved = () => {
   };
 
   // ✅ Status badge
-  const getStatusBadge = (item: Content) => {
-    const normalizedStatus = normalizeStatus(item?.status);
+  // const getStatusBadge = (item: Content) => {
+  //   const normalizedStatus = normalizeStatus(item?.status);
 
-    switch (normalizedStatus) {
-      case "draft":
-        return (
-          <Badge variant="secondary" className="bg-gray-100 text-black">
-            Draft
-          </Badge>
-        );
-      case "in_review":
-        return <Badge className="bg-blue-600 text-white">In review</Badge>;
-      case "published":
-        return (
-          <Badge variant="secondary" className="bg-green-500 text-white">
-            Published
-          </Badge>
-        );
-      case "approved":
-        return (
-          <Badge variant="secondary" className="bg-yellow-400 text-black">
-            Approved
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge variant="secondary" className="bg-red-600 text-white">
-            Rejected
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{item?.status}</Badge>;
-    }
-  };
+  //   switch (normalizedStatus) {
+  //     case "draft":
+  //       return (
+  //         <Badge variant="secondary" className="bg-gray-100 text-black">
+  //           Draft
+  //         </Badge>
+  //       );
+  //     case "in_review":
+  //       return <Badge className="bg-blue-600 text-white">In review</Badge>;
+  //     case "published":
+  //       return (
+  //         <Badge variant="secondary" className="bg-green-500 text-white">
+  //           Published
+  //         </Badge>
+  //       );
+  //     case "approved":
+  //       return (
+  //         <Badge variant="secondary" className="bg-yellow-400 text-black">
+  //           Approved
+  //         </Badge>
+  //       );
+  //     case "rejected":
+  //       return (
+  //         <Badge variant="secondary" className="bg-red-600 text-white">
+  //           Rejected
+  //         </Badge>
+  //       );
+  //     default:
+  //       return <Badge variant="outline">{item?.status}</Badge>;
+  //   }
+  // };
 
   // ✅ Fetch data
   const fetchContentToReview = async () => {
-    const token = localStorage.getItem("accessToken");
-
+   
     try {
       const res = await fetch(
         `${BASE_URL}/content/contents/filter/?status=in_review`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+         credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCsrfToken(),
+              },
         }
       );
 
@@ -300,7 +303,6 @@ const ContentToBeApproved = () => {
     <div>
       <HeaderSection />
 
-      {/* ✅ Tabs */}
       <div className="flex gap-6 mt-5 mb-12 text-sm font-medium justify-start border rounded-sm border-gray-300 px-4 py-1 w-fit">
         <h1
           onClick={() => setActiveFilter("admin")}

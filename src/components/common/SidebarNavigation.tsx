@@ -18,35 +18,24 @@ const SidebarNavigation = () => {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const handleLogout = async () => {
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      const refreshToken = localStorage.getItem("refreshToken");
+  try {
+    await fetch(`${BASE_URL}/accounts/logout/`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("Logout API failed", error);
+  } finally {
+    localStorage.removeItem("username");
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
 
-      if (accessToken && refreshToken) {
-        await fetch(`${BASE_URL}/accounts/logout/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            refresh: refreshToken,
-          }),
-        });
-      }
-    } catch (error) {
-      console.error("Logout API failed", error);
-    } finally {
-      // localStorage.removeItem("user");
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("username");
-      localStorage.removeItem("email");
-      localStorage.removeItem("role");
-      // Redirect to login
-      navigate("/login");
-    }
-  };
+    navigate("/login");
+  }
+};
 
   return (
     <div className={`fixed left-0 top-0 z-50 bg-[#1a2c47] h-screen flex flex-col transition-all duration-300 ${sideBarOpen ? "w-64 sm:w-[312px]" : "w-20"}`}>

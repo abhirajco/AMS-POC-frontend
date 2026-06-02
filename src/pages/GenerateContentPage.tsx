@@ -13,194 +13,7 @@ import TextEditor from '@/components/ui/TextEditor';
 import VersionSidebar from "@/components/ui/VersionSidebar";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { useLocation } from "react-router-dom";
-
-
-
-
-
-
-
-import * as pdfjsLib from "pdfjs-dist";
-import mammoth from "mammoth";
-
-// REQUIRED for pdfjs
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url,
-).toString();
-
-export interface ParsedDocument {
-  title: string;
-  description: string;
-  milestones: string[];
-  rawText: string;
-}
-
-/* ──────────────────────────────────────────────
-   PDF Extraction
-────────────────────────────────────────────── */
-
-const extractPdfText = async (
-  file: File,
-): Promise<string> => {
-  const arrayBuffer = await file.arrayBuffer();
-
-  const pdf = await pdfjsLib.getDocument({
-    data: arrayBuffer,
-  }).promise;
-
-  let text = "";
-
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-
-    const content =
-      await page.getTextContent();
-
-    const strings = content.items.map(
-      (item) => {
-        if ("str" in item) {
-          return item.str;
-        }
-
-        return "";
-      },
-    );
-
-    text += strings.join(" ") + "\n";
-  }
-
-  return text;
-};
-
-/* ──────────────────────────────────────────────
-   DOCX Extraction
-────────────────────────────────────────────── */
-
-const extractDocxText = async (
-  file: File,
-): Promise<string> => {
-  const arrayBuffer = await file.arrayBuffer();
-
-  const result =
-    await mammoth.extractRawText({
-      arrayBuffer,
-    });
-
-  return result.value;
-};
-
-/* ──────────────────────────────────────────────
-   TXT / MD Extraction
-────────────────────────────────────────────── */
-
-const extractPlainText = async (
-  file: File,
-): Promise<string> => {
-  return await file.text();
-};
-
-/* ──────────────────────────────────────────────
-   Main Extractor
-────────────────────────────────────────────── */
-
-export const extractTextFromFile =
-  async (file: File): Promise<string> => {
-    const extension = file.name
-      .split(".")
-      .pop()
-      ?.toLowerCase();
-
-    switch (extension) {
-      case "pdf":
-        return await extractPdfText(file);
-
-      case "docx":
-        return await extractDocxText(file);
-
-      case "txt":
-      case "md":
-        return await extractPlainText(file);
-
-      default:
-        throw new Error(
-          "Unsupported file format",
-        );
-    }
-  };
-
-/* ──────────────────────────────────────────────
-   Custom Parser
-────────────────────────────────────────────── */
-
-export const parsePlanningDocument = (
-  text: string,
-): ParsedDocument => {
-  const cleaned = text
-    .replace(/\r/g, "")
-    .replace(/\t/g, " ")
-    .replace(/\n{2,}/g, "\n")
-    .trim();
-
-  const lines = cleaned
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  // TITLE
-  const title = lines[0] ?? "";
-
-  // DESCRIPTION
-  const description = lines
-    .slice(1, 6)
-    .join(" ");
-
-  // SIMPLE MILESTONE DETECTION
-  const milestones = lines.filter(
-    (line) =>
-      line.startsWith("-") ||
-      line.startsWith("•") ||
-      /^\d+\./.test(line),
-  );
-
-  return {
-    title,
-    description,
-    milestones,
-    rawText: cleaned,
-  };
-};
-
-
-
-
-// const handleFileUpload = async (
-//   e: React.ChangeEvent<HTMLInputElement>,
-// ) => {
-//   const file = e.target.files?.[0];
-
-//   if (!file) return;
-
-//   try {
-//     const rawText =
-//       await extractTextFromFile(file);
-
-//     const parsed =
-//       parsePlanningDocument(rawText);
-
-//     setForm((prev) => ({
-//       ...prev,
-//       title: parsed.title,
-//       description: parsed.description,
-//     }));
-
-//     console.log(parsed);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// };
-
-
+import { getCsrfToken } from "@/utils/csrf";
 const GenerateContentPage = () => {
 
   const [description, setDescription] = useState('');
@@ -284,8 +97,6 @@ const handleFileUpload = async (
 
 
   const handleSubmitContent = async () => {
-    const token = localStorage.getItem("accessToken");
-
     if (!contentId) {
       toast.error("No content selected");
       return;
@@ -295,9 +106,10 @@ const handleFileUpload = async (
       // STEP 1: SAVE
       const saveRes = await fetch(`${BASE_URL}/content/contents/save/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           content_id: contentId,
@@ -318,9 +130,10 @@ const handleFileUpload = async (
       //  STEP 2: SUBMIT (only if save success)
       const submitRes = await fetch(`${BASE_URL}/content/contents/submit/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           content_id: contentId,
@@ -347,8 +160,6 @@ const handleFileUpload = async (
   };
 
   const handleSaveVersion = async () => {
-    const token = localStorage.getItem("accessToken");
-
     if (!contentId) {
       toast.error("No content selected");
       return;
@@ -358,9 +169,10 @@ const handleFileUpload = async (
       // SAVE
       const res = await fetch(`${BASE_URL}/content/contents/save/`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
         body: JSON.stringify({
           content_id: contentId,
@@ -389,12 +201,12 @@ const handleFileUpload = async (
 
   const unlockContent = async (id: string) => {
     try {
-      const token = localStorage.getItem("accessToken"); //get token
-
       await fetch(`http://127.0.0.1:8000/api/content/contents/${id}/lock/`, {
         method: "DELETE",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
         },
       });
 
@@ -413,8 +225,6 @@ const handleFileUpload = async (
   };
 
   const fetchVersionDetails = async (contentId: string, versionId?: string) => {
-    const token = localStorage.getItem("accessToken");
-
     try {
       let url = "";
 
@@ -425,7 +235,12 @@ const handleFileUpload = async (
       }
 
       const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
       });
 
       const data = await res.json();
@@ -442,13 +257,15 @@ const handleFileUpload = async (
   };
 
   const fetchParticularContent = async (contentId:any) => {
-    //setContentId(id);
     try {
-      const token = localStorage.getItem("accessToken")
       const res = await fetch(`${BASE_URL}/content/contents/${contentId}`,
         {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
+          },
         })
       const data = await res.json();
       setContentTitle(data.title);

@@ -10,6 +10,7 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 //import { useEffect } from "react";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { toast } from "sonner";
+import { getCsrfToken } from "@/utils/csrf";
 
 function fileListToImageFiles(fileList: FileList): File[] {
   return Array.from(fileList).filter((file) => {
@@ -35,6 +36,10 @@ export default function ApprovalTextEditor({ contentTitle, contentBody, contentI
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [title, setTitle] = useState(contentTitle);
 
+  useEffect(() => {
+    setTitle(contentTitle);
+  }, [contentTitle]);
+
 
   const toggleLock = async () => {
     if (!contentId) 
@@ -42,14 +47,14 @@ export default function ApprovalTextEditor({ contentTitle, contentBody, contentI
     console.error("No contentId found");
     return;
   }
-    const token = localStorage.getItem("accessToken");
-
     try {
       const res = await fetch(`${BASE_URL}/content/contents/${contentId}/lock/`,
         {
           method: "POST",
+          credentials: "include",
           headers: {
-            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
           },
         }
       );
@@ -148,7 +153,7 @@ export default function ApprovalTextEditor({ contentTitle, contentBody, contentI
         <input
           type="text"
           placeholder="Content title"
-          value={contentTitle}
+          value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="border rounded border-gray-300 py-1 px-3 w-full mt-3"
         />
@@ -240,3 +245,5 @@ export default function ApprovalTextEditor({ contentTitle, contentBody, contentI
   );
 
 }
+
+

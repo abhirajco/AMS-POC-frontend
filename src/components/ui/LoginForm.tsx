@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BASE_URL } from "@/utils/BASE_URL";
+import { setCsrfToken } from "@/utils/csrf";
 
 const LoginForm = ({
   onLogin,
@@ -25,89 +26,112 @@ const LoginForm = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
- 
 
-  // const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
 
-  //   if (!email.trim()) {
-  //     setError("Email is required");
-  //     return;
-  //   }
+  
 
-  //   if (!password.trim()) {
-  //     setError("Password is required");
-  //     return;
-  //   }
+// const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+//   e.preventDefault();
 
-  //   setIsLoading(true);
-  //   setError("");
+//   setError("");
 
-  //   try {
-  //     const response = await fetch(`${BASE_URL}/accounts/login/`, {
-  //       method: "POST",
-  // credentials: "include", // IMPORTANT
-  // headers: {
-  //   "Content-Type": "application/json",
-  // },
-  //       body: JSON.stringify({ email, password }),
-  //     });
+//   if (!email.trim()) {
+//     setError("Email is required");
+//     return;
+//   }
 
-  //     const data = await response.json();
+//   if (!password.trim()) {
+//     setError("Password is required");
+//     return;
+//   }
 
-  //     console.log("Login Response:", data);
+//   setIsLoading(true);
 
-  //     //  validation errors from backend
-  //     if (Array.isArray(data)) {
-  //       setError(data[0]);
-  //       setIsLoading(false);
-  //       return;
-  //     }
+//   try {
+//     const response = await fetch(`${BASE_URL}/accounts/login/`, {
+//       method: "POST",
 
-  //     //  invalid credentials
-  //     if (!data.access) {
-  //       setError("Invalid email or password");
-  //       setIsLoading(false);
-  //       return;
-  //     }
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
 
-  //     //  store tokens
-  //     localStorage.setItem("accessToken", data.access);
-  //     localStorage.setItem("refreshToken", data.refresh);
+//        credentials: "include",
 
-  //     //  store user data
-  //     if (data.user)
-  //     {
-  //       const userData =
-  //      {
-  //       full_name: data.user.full_name,
-  //       email: data.user.email,
-  //       role: data.user.role,
-  //      };
+//       body: JSON.stringify({
+//         email: email.trim(),
+//         password,
+//       }),
+//     });
 
-  //        localStorage.setItem("user", JSON.stringify(userData));
-  //     }
+//     let data;
 
-  //     //  pass data to parent
-  //     onLogin({
-  //       email: data.user?.email || email,
-  //       name: data.user?.full_name || "User",
-  //       role: data.user?.role || "marketing-head",
-  //       rememberMe: rememberMe,
-  //     });
+//     try {
+//       data = await response.json();
+//     } catch {
+//       throw new Error("Invalid server response");
+//     }
 
-  //     //  redirect to home
-  //     navigate("/");
+//     console.log("Login Response:", data);
 
-  //   } catch (err) {
-  //     setError("Server error. Please try again.");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+//     if (Array.isArray(data)) {
+//       setError(data[0]);
+//       return;
+//     }
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+//     if (!response.ok) {
+//       setError(data?.message || "Login failed");
+//       return;
+//     }
+
+//     if (!data?.user) {
+//       setError("User data not found");
+//       return;
+//     }
+
+//     const userData: User = {
+//       id: data.user.id,
+//       email: data.user.email,
+//       full_name: data.user.full_name,
+//       group: data.user.group,
+//       role: data.user.role,
+//     };
+
+//     localStorage.setItem("user", JSON.stringify(userData));
+
+//     onLogin({
+//       email: data.user.email,
+//       name: data.user.full_name,
+//       role: data.user.role,
+//       rememberMe,
+//     });
+
+//     navigate("/");
+
+//   } catch (error) {
+//     console.error("Login Error:", error);
+
+//     if (error instanceof TypeError) {
+//       setError("Network error. Please check your internet connection.");
+//     } else {
+//       setError("Something went wrong. Please try again.");
+//     }
+//   } finally {
+//     setIsLoading(false);
+//   }
+// };
+
+type User = {
+  id: string;
+  email: string;
+  full_name: string;
+  group: string;
+  role: string;
+};
+
+const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
+
+  setError("");
 
   if (!email.trim()) {
     setError("Email is required");
@@ -120,60 +144,97 @@ const LoginForm = ({
   }
 
   setIsLoading(true);
-  setError("");
 
   try {
     const response = await fetch(`${BASE_URL}/accounts/login/`, {
       method: "POST",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      credentials: "include", 
+      body: JSON.stringify({
+        email: email.trim(),
+        password,
+      }),
     });
 
-    const data = await response.json();
+    let data;
+    console.log("Response Headers");
+console.log([...response.headers.entries()]);
+
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("Invalid server response");
+    }
 
     console.log("Login Response:", data);
 
-    // Validation errors from backend
+    // Backend validation errors
     if (Array.isArray(data)) {
       setError(data[0]);
       return;
     }
 
-    // Login failed
     if (!response.ok) {
-      setError(data?.message || "Invalid email or password");
+      setError(
+        data?.error ||
+        data?.message ||
+        data?.detail ||
+        "Login failed"
+      );
       return;
     }
 
-    // Store only user info if needed
-    if (data.user) {
-      const userData = {
-        full_name: data.user.full_name,
-        email: data.user.email,
-        role: data.user.role,
-      };
-
-      localStorage.setItem("user", JSON.stringify(userData));
+    if (!data?.user) {
+      setError("User data not found");
+      return;
     }
 
+    // Optional role validation
+    // if (
+    //   data.user.role !== "admin" &&
+    //   data.user.role !== "exec_approver"
+    // ) {
+    //   setError("Unauthorized user");
+    //   return;
+    // }
+
+    const userData: User = {
+      id: data.user.id,
+      email: data.user.email,
+      full_name: data.user.full_name,
+      group: data.user.group,
+      role: data.user.role,
+    };
+
+    // Store only non-sensitive user info
+    localStorage.setItem("user", JSON.stringify(userData));
+    setCsrfToken(data.csrfToken);
+
     onLogin({
-      email: data.user?.email || email,
-      name: data.user?.full_name || "User",
-      role: data.user?.role || "marketing-head",
+      email: userData.email,
+      name: userData.full_name,
+      role: userData.role,
       rememberMe,
     });
 
     navigate("/");
-  } catch (err) {
-    console.error(err);
-    setError("Server error. Please try again.");
+
+  } catch (error) {
+    console.error("Login Error:", error);
+
+    if (error instanceof TypeError) {
+      setError("Network error. Please check your internet connection.");
+    } else {
+      setError("Something went wrong. Please try again.");
+    }
   } finally {
     setIsLoading(false);
   }
 };
+ 
+
   return (
     <div className="w-full max-w-md font-montserrat mx-auto mt-10">
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 sm:p-10">
