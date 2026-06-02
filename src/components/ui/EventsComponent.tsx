@@ -25,10 +25,10 @@ import {
 } from "@mui/lab";
 import { useState } from "react";
 
-import {  CalendarEvent,  Milestone } from "../../components/ui/calendar";
+import {  CalendarEvent,  Milestone } from "../ui/calendar copy";
 import { EditableField } from "./InlineEditableField";
 import { EditableAssignedTeam, TeamMember } from "./EditableAssignedTeams";
-import RichTextEditor from "./CommentSection";
+import RichTextEditor from "../ui/CommentSection copy";
 import { RelatedItems } from "./RelatedItems";
 import { HistoryTab } from "./EventHistoryTwo";
 import { AttachmentTab, Attachment } from "../ui/Attachment";

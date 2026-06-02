@@ -27,84 +27,153 @@ const LoginForm = ({
   const [error, setError] = useState("");
  
 
+  // const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+
+  //   if (!email.trim()) {
+  //     setError("Email is required");
+  //     return;
+  //   }
+
+  //   if (!password.trim()) {
+  //     setError("Password is required");
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+  //   setError("");
+
+  //   try {
+  //     const response = await fetch(`${BASE_URL}/accounts/login/`, {
+  //       method: "POST",
+  // credentials: "include", // IMPORTANT
+  // headers: {
+  //   "Content-Type": "application/json",
+  // },
+  //       body: JSON.stringify({ email, password }),
+  //     });
+
+  //     const data = await response.json();
+
+  //     console.log("Login Response:", data);
+
+  //     //  validation errors from backend
+  //     if (Array.isArray(data)) {
+  //       setError(data[0]);
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     //  invalid credentials
+  //     if (!data.access) {
+  //       setError("Invalid email or password");
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     //  store tokens
+  //     localStorage.setItem("accessToken", data.access);
+  //     localStorage.setItem("refreshToken", data.refresh);
+
+  //     //  store user data
+  //     if (data.user)
+  //     {
+  //       const userData =
+  //      {
+  //       full_name: data.user.full_name,
+  //       email: data.user.email,
+  //       role: data.user.role,
+  //      };
+
+  //        localStorage.setItem("user", JSON.stringify(userData));
+  //     }
+
+  //     //  pass data to parent
+  //     onLogin({
+  //       email: data.user?.email || email,
+  //       name: data.user?.full_name || "User",
+  //       role: data.user?.role || "marketing-head",
+  //       rememberMe: rememberMe,
+  //     });
+
+  //     //  redirect to home
+  //     navigate("/");
+
+  //   } catch (err) {
+  //     setError("Server error. Please try again.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!email.trim()) {
-      setError("Email is required");
+  if (!email.trim()) {
+    setError("Email is required");
+    return;
+  }
+
+  if (!password.trim()) {
+    setError("Password is required");
+    return;
+  }
+
+  setIsLoading(true);
+  setError("");
+
+  try {
+    const response = await fetch(`${BASE_URL}/accounts/login/`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    console.log("Login Response:", data);
+
+    // Validation errors from backend
+    if (Array.isArray(data)) {
+      setError(data[0]);
       return;
     }
 
-    if (!password.trim()) {
-      setError("Password is required");
+    // Login failed
+    if (!response.ok) {
+      setError(data?.message || "Invalid email or password");
       return;
     }
 
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch(`${BASE_URL}/accounts/login/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      console.log("Login Response:", data);
-
-      //  validation errors from backend
-      if (Array.isArray(data)) {
-        setError(data[0]);
-        setIsLoading(false);
-        return;
-      }
-
-      //  invalid credentials
-      if (!data.access) {
-        setError("Invalid email or password");
-        setIsLoading(false);
-        return;
-      }
-
-      //  store tokens
-      localStorage.setItem("accessToken", data.access);
-      localStorage.setItem("refreshToken", data.refresh);
-
-      //  store user data
-      if (data.user)
-      {
-        const userData =
-       {
+    // Store only user info if needed
+    if (data.user) {
+      const userData = {
         full_name: data.user.full_name,
         email: data.user.email,
         role: data.user.role,
-       };
+      };
 
-         localStorage.setItem("user", JSON.stringify(userData));
-      }
-
-      //  pass data to parent
-      onLogin({
-        email: data.user?.email || email,
-        name: data.user?.full_name || "User",
-        role: data.user?.role || "marketing-head",
-        rememberMe: rememberMe,
-      });
-
-      //  redirect to home
-      navigate("/");
-
-    } catch (err) {
-      setError("Server error. Please try again.");
-    } finally {
-      setIsLoading(false);
+      localStorage.setItem("user", JSON.stringify(userData));
     }
-  };
 
+    onLogin({
+      email: data.user?.email || email,
+      name: data.user?.full_name || "User",
+      role: data.user?.role || "marketing-head",
+      rememberMe,
+    });
+
+    navigate("/");
+  } catch (err) {
+    console.error(err);
+    setError("Server error. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
     <div className="w-full max-w-md font-montserrat mx-auto mt-10">
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 sm:p-10">

@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, MapPin } from "lucide-react";
 import EditCampaign from "../EditCampaign";
 
-
 const AllCampaign = () => {
   const campaigns = useCampaign((s: any) => s.campaigns);
   const fetchCampaigns = useCampaign((s: any) => s.fetchCampaigns);

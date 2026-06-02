@@ -1,3 +1,44 @@
+
+export interface CampaignApi {
+  campaign_id: string;
+
+  campaign_type: string;
+
+  created_at: string;
+
+  created_by: string;
+
+  created_by_name: string;
+
+  description: string;
+
+  end_date: string;
+
+  event_count: number;
+
+  location: string;
+
+  max_hierarchy_level: number;
+
+  priority: string;
+
+  start_date: string;
+
+  status: string;
+
+  tags: string;
+
+  task_count: number;
+
+  title: string;
+
+  updated_at: string;
+}
+
+
+
+
+
 import HeaderSection from "@/components/common/HeaderSection"
 import { Button } from "../components/ui/button";
 import { Plus, Calendar as CalendarIcon, Search, List, ArrowLeft, ArrowRight, Clock, MapPin, Edit, Trash2, Copy, Star } from 'lucide-react';
@@ -8,7 +49,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Input } from "../components/ui/input";
 import AllCampaign from "@/components/ui/CampaingnHub/AllCampaign";
 import CreateCampaignDialog from "@/components/ui/CampaingnHub/CreateCampaign";
-import CalendarApp from "@/components/ui/CampaingnHub/CalenderView";
+// import CalendarApp from "@/components/ui/CampaingnHub/CalenderView";
+import FullCalendar from "@fullcalendar/react";
+import CalendarApp from "@/components/ui/calendar copy";
+
+import { useCampaign } from "@/store/useCampaign";
 
 const CampaignHubPage = () => {
 
@@ -18,7 +63,47 @@ const CampaignHubPage = () => {
   const [viewMode, setViewMode] = useState('list');
   const [activeTab, setActiveTab] = useState('all');
   const [isCreateCampaignOpen, setIsCreateCampaignOpen] = useState(false);
-  const calendarRef = useRef<any>(null);
+  const calendarRef = useRef<FullCalendar>(null);
+const [currentLabel, setCurrentLabel] = useState("");
+
+
+  const {
+    campaigns,
+    fetchCampaigns,
+    isLoading,
+    error,
+  } = useCampaign();
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, [fetchCampaigns]);
+
+
+  console.log("@@@@@@@@@@@@@@",campaigns);
+  
+
+
+const handlePrev = () => {
+  const api = calendarRef.current?.getApi();
+  if (!api) return;
+  api.prev();
+  setCurrentLabel(api.view.title);
+};
+
+const handleNext = () => {
+  const api = calendarRef.current?.getApi();
+  if (!api) return;
+  api.next();
+  setCurrentLabel(api.view.title);
+};
+
+
+useEffect(() => {
+  setTimeout(() => {
+    const api = calendarRef.current?.getApi();
+    if (api) setCurrentLabel(api.view.title);
+  }, 100);
+}, []);
 
 
   useEffect(() => 
@@ -150,18 +235,34 @@ const CampaignHubPage = () => {
 
           {/* Date Nav + View Toggle */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => { }}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <div className="flex items-center gap-2 px-3 py-1 border border-gray-300 rounded-full">
                 <CalendarIcon className="w-4 h-4 text-gray-600" />
-                <span className="text-sm text-gray-700">{/* current date range */}</span>
+                <span className="text-sm text-gray-700"></span>
               </div>
               <Button variant="outline" size="sm">
                 <ArrowRight className="w-4 h-4" />
               </Button>
-            </div>
+            </div> */}
+            <div className="flex items-center gap-2">
+  <Button variant="outline" size="sm" onClick={handlePrev}>
+    <ArrowLeft className="w-4 h-4" />
+  </Button>
+
+  <div className="flex items-center gap-2 px-3 py-1 border border-gray-300 rounded-full">
+    <CalendarIcon className="w-4 h-4 text-gray-600" />
+    <span className="text-sm text-gray-700">
+      {currentLabel}
+    </span>
+  </div>
+
+  <Button variant="outline" size="sm" onClick={handleNext}>
+    <ArrowRight className="w-4 h-4" />
+  </Button>
+</div>
             <div className="flex items-center gap-2">
 
               <div className="flex items-center gap-2">
@@ -200,7 +301,10 @@ const CampaignHubPage = () => {
               width: "100%",
             }}
           >
-            <CalendarApp calendarRef={calendarRef} />
+            <CalendarApp
+  campaigns={campaigns}
+  calendarRef={calendarRef}
+/>
           </div>
         ) : (
           <AllCampaign />
