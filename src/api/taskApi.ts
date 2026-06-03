@@ -1,6 +1,5 @@
 import { getCsrfToken } from "@/utils/csrf";
-
-const BASE_URL = "http://127.0.0.1:8000/api";
+import { BASE_URL } from "@/utils/BASE_URL";
 
 const cookieHeaders = () => ({
   "Content-Type": "application/json",
@@ -16,12 +15,21 @@ export const getTasks = async () => {
   return await res.json();
 };
 
-export const updateTaskStatus = async (id: number, status: string) => {
+export const updateTaskStatus = async (id: string, status: string) => {
   const res = await fetch(`${BASE_URL}/board/tasks/${id}/update/`, {
     method: "PATCH",
     credentials: "include",
     headers: cookieHeaders(),
     body: JSON.stringify({ status }),
+  });
+  return await res.json();
+};
+
+export const getTaskDetail = async (taskId: string) => {
+  const res = await fetch(`${BASE_URL}/board/tasks/${taskId}/`, {
+    method: "GET",
+    credentials: "include",
+    headers: cookieHeaders(),
   });
   return await res.json();
 };

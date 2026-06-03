@@ -88,7 +88,7 @@ import { toast } from "sonner";
 
 export const fetchAllEvent = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/board/events`, {
+    const res = await fetch(`${BASE_URL}/board/events/all`, {
       method: "GET",
       credentials: "include",
       headers: {
