@@ -236,3 +236,8 @@ html {
 .custom-calendar .fc-scrollgrid-sync-table tr {
   height: 160px !important;
 }
+
+
+.fc .fc-daygrid-day-top {
+  justify-content: flex-end !important;
+}

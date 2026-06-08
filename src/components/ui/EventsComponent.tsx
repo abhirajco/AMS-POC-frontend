@@ -38,6 +38,7 @@ import { AttachmentTab, Attachment } from "../ui/Attachment";
 type ActivePage = "Page1" | "Page2" | "Page3";
 
 interface EventDialogProps {
+  history:any[];
   open: boolean;
   form: Partial<CalendarEvent>;
   teamOptions: TeamMember[];
@@ -177,6 +178,7 @@ const sectionBoxSx = {
 // ── Main component ───────────────────────────────────────────────
 
 export const EventDialog = ({
+  history,
   open,
   form,
   teamOptions,
@@ -192,6 +194,13 @@ export const EventDialog = ({
     onFormChange({ ...form, ...patch });
 
   const milestoneCount = form.milestones?.length ?? 0;
+
+  const formatDisplayDate = (date?: string) => {
+  if (!date) return "";
+
+  const [y, m, d] = date.split("-");
+  return `${d}-${m}-${y}`;
+};
 
   return (
     <Dialog
@@ -233,7 +242,7 @@ export const EventDialog = ({
             top: 8,
             right: 8,
             color: "#6b7280",
-            "&:hover": { backgroundColor: "#f3f4f6", color: "#111827" },
+            "&:hover": { backgroundColor: "#f3f4f6", color: "#4c5871" },
           }}
         >
           <CloseIcon sx={{ fontSize: 20 }} />
@@ -267,11 +276,45 @@ export const EventDialog = ({
           />
         </Box>
 
-        <Box sx={{ display: "flex", gap: 1, mt: 1.5, flexWrap: "wrap", "& .MuiChip-root": { borderRadius: "4px", height: 24, fontSize: 12 } }}>
+<Box
+ sx={{
+  display: "flex",
+  justifyContent:"space-between",
+ }}>
+          <Box sx={{ display: "flex", gap: 1, mt: 1.5, flexWrap: "wrap", "& .MuiChip-root": { borderRadius: "4px", height: 24, fontSize: 12 } }}>
           {form.status   && <Chip label={form.status}   size="small" sx={getStatusChipSx(form.status)} />}
           {form.priority && <Chip label={form.priority} size="small" sx={getPriorityChipSx(form.priority)} />}
           {form.type     && <Chip label={form.type}     size="small" variant="outlined" />}
         </Box>
+        <Box
+        sx={{
+          display: "flex", gap: 1, mt: 1.5, flexWrap: "wrap", "& .MuiChip-root": { borderRadius: "4px", height: 24, fontSize: 12 }
+        }}
+        >
+          {form.type && form.endDate && (() => {
+              const daysDiff = Math.ceil(
+                (
+                  new Date(form.endDate).setHours(0, 0, 0, 0) -
+                  new Date().setHours(0, 0, 0, 0)
+                ) /
+                (1000 * 60 * 60 * 24)
+              );
+
+              return (
+                <Chip
+                  label={
+                    daysDiff < 0
+                      ? `Overdue by ${Math.abs(daysDiff)} days`
+                      : `Due in ${daysDiff} days`
+                  }
+                  color={daysDiff < 0 ? "error" : "default"}
+                  size="small"
+                  variant="outlined"
+                />
+              );
+            })()}
+        </Box>
+</Box>
       </DialogTitle>
 
       {/* ── Scrollable content ────────────────────────── */}
@@ -290,25 +333,38 @@ export const EventDialog = ({
                   {/* Fields grid */}
                   <Box sx={{ display: "grid", gridTemplateColumns: "7fr 7fr", gap: 2, ml: 4, mt: 2, width: "80%" }}>
                     {[
-                      {
-                        label: "Date",
-                        value: form.eventDate ?? "",
-                        type: "date",
-                        onSave: (iso: string) => {
-                          const [y, m, d] = iso.split("-");
-                          set({ date: iso, eventDate: `${d}-${m}-${y}` });
-                        },
-                      },
+{
+  label: "Start Date",
+  value: form.eventDate
+    ? (() => {
+        const [y, m, d] = form.eventDate.split("-");
+        return `${d}-${m}-${y}`;
+      })()
+    : "",
+  type: "date",
+  onSave: (iso: string) => {
+    set({
+      date: iso,
+      eventDate: iso,
+    });
+  },
+},
                       {
                         label: "Location",
                         value: form.location ?? "",
                         onSave: (val: string) => set({ location: val }),
                       },
                       {
-                        label: "Due",
-                        value: form.dueTime ?? "",
-                        onSave: (val: string) => set({ dueTime: val }),
+                        label: "End Date",
+                        value: formatDisplayDate(form.endDate),
+                        type: "date",
+                        onSave: (iso: string) => {
+                          set({
+                            endDate: iso,
+                          });
+                        },
                       },
+                      
                     ].map(({ label, value, onSave, type }) => (
                       <Box key={label} sx={{ display: "flex", alignItems: "center" }}>
                         <Typography sx={{ fontSize: "1.1rem" }} color="text.secondary">
@@ -560,7 +616,7 @@ export const EventDialog = ({
             {/* ── Page 2 — History ──────────────────── */}
             {activePage === "Page2" && (
               <Box sx={{ p: 2, minHeight: "100%" }}>
-                <HistoryTab eventId={form.id ?? 0} />
+                <HistoryTab      history={history} />
               </Box>
             )}
 

@@ -70,6 +70,7 @@ const [currentLabel, setCurrentLabel] = useState("");
   const {
     campaigns,
     fetchCampaigns,
+    updateCampaignById,
     isLoading,
     error,
   } = useCampaign();
@@ -304,6 +305,7 @@ useEffect(() => {
             <CalendarApp
   campaigns={campaigns}
   calendarRef={calendarRef}
+   onRefresh={fetchCampaigns}
 />
           </div>
         ) : (
