@@ -64,6 +64,7 @@ export const getAllCampaign = async () => {
   }
 };
 
+
 export const createCampaign = async (campaignData: any) => {
   try {
     const response = await fetch(`${BASE_URL}/board/campaigns/`, {
@@ -406,19 +407,23 @@ export const filterCampaigns = async (params: Record<string, any>) => {
     cleaned as Record<string, string>
   ).toString();
 
-  const res = await fetch(
-    `${BASE_URL}/board/campaigns/filter/?${query}`,
-    {
-      method: "GET",
-      credentials: "include",
-      headers: cookieHeaders(),
+  try {
+    const res = await fetch(
+      `${BASE_URL}/board/campaigns/filter/?${query}`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: cookieHeaders(),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(`Failed to filter campaigns: ${res.status}`);
     }
-  );
 
-  if (!res.ok) {
-    throw new Error(`Failed to filter campaigns: ${res.status}`);
+    return await res.json();
+  } catch (err: any) {
+    console.error("FILTER CAMPAIGNS ERROR:", err);
+    throw err;
   }
-
-  return await res.json();
 };
-
