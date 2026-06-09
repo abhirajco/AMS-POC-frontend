@@ -538,10 +538,9 @@ export const HistoryTab = ({ history }: { history: HistoryEntry[] }) => {
     );
   }
 
-  const sorted = [...history].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
-
+const sorted = [...history].sort(
+  (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+);
   const contributors = [...new Set(history.map(h => h.performed_by_name))].length;
   const uniqueActions = [...new Set(history.map(h => h.action?.toLowerCase()))].length;
 
@@ -577,9 +576,15 @@ export const HistoryTab = ({ history }: { history: HistoryEntry[] }) => {
 
       {/* Entries */}
       <Box>
-        {sorted.map((entry, i) => (
+        {history.map((entry, i) => (
           <HistoryEntryRow key={entry.history_id} entry={entry} isLast={i === sorted.length - 1} />
         ))}
+          {/* {history.map((entry) => (
+    <HistoryEntryRow
+      key={entry.history_id}
+      entry={entry}
+    />
+  ))} */}
       </Box>
     </Box>
   );

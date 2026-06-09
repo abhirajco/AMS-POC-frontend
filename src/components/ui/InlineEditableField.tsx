@@ -86,7 +86,11 @@ export const EditableField: React.FC<{
   multiline?: boolean;
   type?: string;
   fontSize?: string;
-}> = ({ value, onSave, multiline = false, type = "text" ,  fontSize = "0.875rem",}) => {
+  placeholder?: string;
+  inputHeight?: string | number;
+}> = ({ value, onSave, multiline = false, type = "text" ,  fontSize = "0.875rem",
+   placeholder = "Click to edit",  inputHeight = 32,
+}) => {
   const [editing, setEditing] = useState(false);
   
   // displayVal is always what's shown in the Typography (DD-MM-YYYY for dates, raw for others)
@@ -174,6 +178,8 @@ export const EditableField: React.FC<{
             onSave(iso); // send ISO to parent so calendar moves correctly
           }}
           style={{
+           height: inputHeight,
+           transition: "all 0.15s ease",
             fontSize,
             padding: "2px 6px",
             border: "1px solid #6366f1",
@@ -192,6 +198,7 @@ export const EditableField: React.FC<{
         type={type}
         autoFocus
         value={inputVal}
+        
         onChange={(e) => setInputVal(e.target.value)}
         onBlur={() => {
           setDisplayVal(inputVal);
@@ -199,6 +206,8 @@ export const EditableField: React.FC<{
           onSave(inputVal);
         }}
         style={{
+              height: inputHeight,
+              transition: "all 0.15s ease",
           fontSize,
           padding: "2px 6px",
           border: "1px solid #6366f1",
@@ -212,22 +221,70 @@ export const EditableField: React.FC<{
   }
 
   return (
-    <Typography
-      onClick={handleClick}
-      sx={{
-        fontSize,
-        textAlign: "left",
-        fontWeight: 500,
-        cursor: "pointer",
-        borderRadius: "4px",
-        px: 0.5,
-        "&:hover": {
-          background: "#f1f5f9",
-          outline: "1px solid #6366f1",
-        },
-      }}
-    >
-      {displayVal || "—"}
-    </Typography>
+    // <Typography
+    //   onClick={handleClick}
+    //   sx={{
+    //     fontSize,
+    //     textAlign: "left",
+    //     fontWeight: 500,
+    //     cursor: "pointer",
+    //     borderRadius: "4px",
+    //     px: 0.5,
+    //     "&:hover": {
+    //       background: "#f1f5f9",
+    //       outline: "1px solid #6366f1",
+    //     },
+    //   }}
+    // >
+    //  {displayVal || placeholder}
+    // </Typography>
+//     <Typography
+//   onClick={handleClick}
+//   sx={{
+//     fontSize,
+//     textAlign: "left",
+//     fontWeight: displayVal ? 500 : 400,
+//     cursor: "pointer",
+//     borderRadius: "4px",
+//     px: 0.5,
+
+//     color: displayVal ? "inherit" : "#9CA3AF",
+//     fontStyle: displayVal ? "normal" :"normal" ,
+
+//     "&:hover": {
+//       background: "#f1f5f9",
+//       outline: "1px solid #6366f1",
+//     },
+//   }}
+// >
+//   {displayVal || placeholder}
+// </Typography>
+<Typography
+  onClick={handleClick}
+  sx={{
+    fontSize: displayVal ? fontSize : "14px !important",
+    fontWeight: displayVal ? 500 : "400 !important",
+    color: displayVal ? "inherit" : "#9CA3AF !important",
+    fontStyle: "normal",
+    textAlign: "left",
+    cursor: "pointer",
+    borderRadius: "4px",
+    px: 0.5,
+        height: inputHeight,
+    minHeight: inputHeight,
+transition: "all 0.15s ease",
+
+
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "left",
+    "&:hover": {
+      background: "#f1f5f9",
+      outline: "1px solid #6366f1",
+    },
+  }}
+>
+  {displayVal || placeholder}
+</Typography>
   );
 };

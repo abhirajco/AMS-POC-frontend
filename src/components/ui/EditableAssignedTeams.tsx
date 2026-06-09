@@ -20,23 +20,28 @@ interface EditableAssignedTeamProps {
   value: TeamMember[];
   options: TeamMember[];
   onSave: (val: TeamMember[]) => void;
+   placeholder?: string;
+    width?: string | number;
 }
 
 export const EditableAssignedTeam: React.FC<
   EditableAssignedTeamProps
-> = ({ value, options, onSave }) => {
+> = ({ value, options, onSave,  placeholder = "Add team members",  width = 340,
+ }) => {
   const [editing, setEditing] = useState(false);
+  
 
   if (!editing) {
     return (
       <Box
         onClick={() => setEditing(true)}
         sx={{
+          width,
+              minHeight: 42,
           display: "flex",
           gap: 1,
           flexWrap: "wrap",
           alignItems: "center",
-          minHeight: 36,
           cursor: "pointer",
           px: 0.5,
           py: 0.5,
@@ -78,14 +83,16 @@ export const EditableAssignedTeam: React.FC<
             />
           ))
         ) : (
-          <Typography
-            sx={{
-              fontSize: 14,
-              color: "#fff",
-            }}
-          >
-            Add team members
-          </Typography>
+<Typography
+  sx={{
+    fontSize: 14,
+    color: "#9CA3AF",
+    ml: 0.5,
+    lineHeight: "32px",
+  }}
+>
+  {placeholder}
+</Typography>
         )}
       </Box>
     );
@@ -93,6 +100,9 @@ export const EditableAssignedTeam: React.FC<
 
   return (
     <Autocomplete
+      sx={{
+            width,
+      }}
       multiple
       freeSolo
       autoFocus
@@ -184,6 +194,7 @@ renderValue={(selected) =>
       }
       size="small"
       sx={{
+        minHeight: 42,
         borderRadius: "16px",
         backgroundColor: "#EEF2FF",
         // color: "#0590fa",
@@ -202,6 +213,8 @@ renderValue={(selected) =>
           placeholder="Assign team members"
           size="small"
           sx={{
+            display:"flex",
+            alignItems:"left",
             "& .MuiOutlinedInput-root": {
               minHeight: 42,
             },

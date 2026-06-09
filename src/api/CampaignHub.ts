@@ -982,3 +982,41 @@ export const getCampaignHistoryById = async (
     throw error;
   }
 };
+
+// Getting the team members 
+// export const getTeamMembers = async () => {
+//   const response = await fetch(`{BASE_URL}/api/accounts/users/search/`, {
+//         method: "GET",
+//         credentials: "include",
+//         headers: {
+//           "Content-Type": "application/json",
+//           "X-CSRFToken": getCsrfToken(),
+//         },
+//   });
+
+//   if (!response.ok) {
+//     throw new Error("Failed to fetch team members");
+//   }
+
+//   return response.json();
+// };
+
+
+export const getTeamMembers = async (
+  query: string
+) => {
+  const response = await fetch(
+    `${BASE_URL}/api/accounts/users/search/?search=${query}`,
+    {
+      credentials: "include",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to search users"
+    );
+  }
+
+  return response.json();
+};

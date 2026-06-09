@@ -255,12 +255,15 @@ export const EventDialog = ({
         <Box
           sx={{
             pb: 2,
-            "& input": { fontSize: "1.5rem !important", fontWeight: "700 !important", color: "#1F2937" },
-            "& .MuiTypography-root": { fontSize: "1.5rem !important", fontWeight: "700 !important", color: "#1F2937" },
+            // "& input": { fontSize: "1.5rem !important", fontWeight: "700 !important", color: "#1F2937" },
+            // "& .MuiTypography-root": { fontSize: "1.5rem !important", fontWeight: "700 !important", color: "#1F2937" },
           }}
         >
           <EditableField
+           fontSize="1.5rem"
+             inputHeight={48}
             value={form.title ?? ""}
+             placeholder="Enter campaign title"
             onSave={(val) => set({ title: val })}
           />
         </Box>

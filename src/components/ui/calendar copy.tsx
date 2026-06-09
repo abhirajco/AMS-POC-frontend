@@ -13,7 +13,7 @@ import {useCampaign} from "@/store/useCampaign";
 
 import AddIcon from "@mui/icons-material/Add";
 import IconButton from "@mui/material/IconButton";
-
+import { useNavigate } from "react-router-dom";
 
 
 const TEAM_OPTIONS: TeamMember[] = [
@@ -136,7 +136,11 @@ const CalendarApp: React.FC<Props> = ({ calendarRef,campaigns,onRefresh,}) => {
   //   }));
   // };
 
-   const {updateCampaignById,deleteCampaignById,createCampaignById,fetchHistoryById} = useCampaign();
+   const {updateCampaignById,deleteCampaignById,createCampaignById,fetchHistoryById,teamMembers} = useCampaign();
+
+// useEffect(() => {
+//   fetchTeamMembers();
+// }, []);
 
   const mapCampaignsToCalendarEvents = (
   campaigns: CampaignApi[],
@@ -228,7 +232,7 @@ const CalendarApp: React.FC<Props> = ({ calendarRef,campaigns,onRefresh,}) => {
 
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
 
-
+const navigate = useNavigate();
 
 
 useEffect(() => {
@@ -447,6 +451,7 @@ const handleSave = async () => {
 
       setIsCreateMode(false);
 
+      navigate(-1); 
       return;
     }
 
@@ -534,20 +539,66 @@ const handleSave = async () => {
 //   }
 // };
 
-  const handleDuplicate = () => {
-    if (!selectedEvent) return;
-    const original = events.find((e) => e.id === selectedEvent.id);
-    if (!original) return;
-    setEvents((prev) => [
-      ...prev,
-      {
-        ...original,
-        id: String(Date.now()),
-        title: `${original.title} (Copy)`,
-      },
-    ]);
+  // const handleDuplicate = () => {
+  //   if (!selectedEvent) return;
+  //   const original = events.find((e) => e.id === selectedEvent.id);
+  //   if (!original) return;
+  //   setEvents((prev) => [
+  //     ...prev,
+  //     {
+  //       ...original,
+  //       id: String(Date.now()),
+  //       title: `${original.title} (Copy)`,
+  //     },
+  //   ]);
+  //   setIsModalOpen(false);
+  // };
+
+const handleDuplicate = async () => {
+  if (!selectedEvent) return;
+
+  const original = events.find(
+    (e) => e.id === selectedEvent.id
+  );
+
+  if (!original) return;
+
+  try {
+    await createCampaignById({
+      title: `${original.title} (Copy)`,
+      description:
+        original.extendedProps?.description ?? "",
+
+      campaign_type:
+        original.extendedProps?.campaign_type ??
+        original.extendedProps?.type?.toLowerCase(),
+
+      start_date:
+        original.extendedProps?.date,
+
+      end_date:
+        original.extendedProps?.endDate,
+
+      location:
+        original.extendedProps?.location ?? "",
+
+      priority:
+        original.extendedProps?.priority?.toLowerCase(),
+
+      status:
+        original.extendedProps?.status
+          ?.toLowerCase()
+          .replace(" ", "_"),
+    });
+
+    await onRefresh();
+
     setIsModalOpen(false);
-  };
+  } catch (err) {
+    console.error("Duplicate campaign failed", err);
+  }
+};
+  
 
   const handleEventDrop = (info: EventDropArg) => {
     setEvents((prev) =>

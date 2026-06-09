@@ -1,7 +1,21 @@
 import { create } from "zustand";
-import { getAllCampaign, getSelectedCampaign,  updateCampaign, deleteCampaign, createCampaign,getCampaignHistoryById  } from "@/api/CampaignHub";
+import { getAllCampaign, getSelectedCampaign,  updateCampaign, deleteCampaign, createCampaign,getCampaignHistoryById ,getTeamMembers  } from "@/api/CampaignHub";
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  initials: string;
+}
+
+
 
 interface CampaignStore {
+    teamMembers: TeamMember[];
+   fetchTeamMembers: (
+  query: string
+) => Promise<void>;
+
   campaigns: any[];
   selectedCampaign: any | null;
 
@@ -33,6 +47,7 @@ fetchHistoryById: (
 }
 
 export const useCampaign = create<CampaignStore>((set) => ({
+  teamMembers: [],
     campaigns: [],
     history: [],
     selectedCampaign: null,
@@ -172,6 +187,20 @@ export const useCampaign = create<CampaignStore>((set) => ({
         });
       }
     },
+    fetchTeamMembers: async (
+  query: string
+) => {
+  try {
+    const data =
+      await getTeamMembers(query);
+
+    set({
+      teamMembers: data,
+    });
+  } catch (err) {
+    set({ error: err });
+  }
+},
   }),  
 
 
