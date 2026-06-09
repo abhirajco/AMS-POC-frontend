@@ -24,6 +24,7 @@ interface AssignSmeResponse {
 }
 
 export interface ContentFilters {
+  search?: string;
   status?: string;
   content_type?: string;
   author_id?: string;
@@ -360,3 +361,5 @@ export const getContentById = async (id: string) => {
     throw error;
   }
 };
+
+

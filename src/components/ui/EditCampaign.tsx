@@ -241,11 +241,7 @@ import { Input } from "./input";
 import { useEffect, useState } from "react";
 import { useCampaign } from "@/store/useCampaign";
 import { Edit, Trash2, Copy } from 'lucide-react';
-import { updateCampaign } from "@/api/CampaignHub";
-import { deleteCampaign } from "@/api/CampaignHub";
-import { getSelectedCampaign } from "@/api/CampaignHub";
-import { getCampaignEvents } from "@/api/CampaignHub";
-import { getCampaignTasks } from "@/api/CampaignHub";
+import { updateCampaign, deleteCampaign } from "@/api/CampaignHub";
 
 type EditCampaignProps =
     {
@@ -261,8 +257,6 @@ const EditCampaign = ({ campaignId, isEventDetailOpen, setIsEventDetailOpen, }: 
     const isFetchingCampaignDetails = useCampaign((s: any) => s.isFetchingCampaignDetails);
     const [isEditingEvent, setIsEditingEvent] = useState(false);
     const [editDraft, setEditDraft] = useState<any | null>(null);
-
-    const relatedTask = getCampaignTasks(campaignId);
 
     const getStatusBadge = (status: string) => {
         const normalizedStatus = status?.toLowerCase();

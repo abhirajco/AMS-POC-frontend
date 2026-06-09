@@ -3,6 +3,7 @@ import { getAllContents, getContentById } from "@/api/ContentHub";
 
 
 interface ContentFilters {
+    search?: string;
     status?: string;
     content_type?: string;
     author_id?: string;

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 export const getAllExecutive = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/content/contents/exe`, {
+    const response = await fetch(`${BASE_URL}/content/contents/exe/`, {
       method: "GET",
       credentials: "include",
       headers: {
@@ -80,6 +80,49 @@ export const getAllWriter = async () => {
 
   } catch (error) {
     console.error("Error fetching writers:", error);
+    throw error;
+  }
+};
+
+
+
+export const getAllUsers = async () => {
+  try {
+    const res = await fetch(`${BASE_URL}/accounts/users/all/`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+    });
+
+    if (res.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.detail || "Session expired. Please login again.");
+    }
+
+    if (res.status === 403) {
+      throw new Error("You are not authorized to view users.");
+    }
+
+    if (res.status >= 500) {
+      toast.error("Internal server error. Please try again later.");
+      throw new Error("Internal server error.");
+    }
+
+    if (!res.ok) {
+      const errorMessage = await res.text();
+      throw new Error(errorMessage || `Failed to fetch users. Status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data;
+
+  } catch (error) {
+    console.error("Error fetching users:", error);
     throw error;
   }
 };
