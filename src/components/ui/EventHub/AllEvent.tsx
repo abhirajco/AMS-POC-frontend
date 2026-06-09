@@ -1,22 +1,17 @@
 import { useEvent } from "@/store/useEvent";
-import { useEffect } from "react";
 import { Card, CardContent } from "@mui/material";
 import {Calendar as CalendarIcon,} from 'lucide-react';
 
-const AllEvent = () => {
-    const { events, fetchEvents } = useEvent();
-    
-    useEffect(() => {
-        fetchEvents();
-    }, []);
-
-    useEffect(() => {
-      console.log(events);
-    }, [events]);
+const AllEvent = ({ events: eventsProp }: { events?: any[] } = {}) => {
+    const eventsRaw = useEvent((s) => s.events);
+    const events = eventsProp ?? (Array.isArray(eventsRaw) ? eventsRaw : []);
 
     return (
-        
+
      <div className="space-y-4">
+              {events.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-8">No events found.</p>
+              )}
               {events.map(event => (
                 <Card
                   key={event.event_id}

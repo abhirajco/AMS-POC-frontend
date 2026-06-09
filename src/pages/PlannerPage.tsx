@@ -3,7 +3,8 @@ import { getTasks, updateTaskStatus, filterTasks } from "../api/taskApi";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, useDraggable, type DragEndEvent, type DragStartEvent,} from "@dnd-kit/core";
 import HeaderSection from "@/components/common/HeaderSection";
 import { Button } from "../components/ui/button";
-import { Plus, Star, ArrowLeft, Calendar } from "lucide-react";
+import { Plus, Star, ArrowLeft, Calendar, Search } from "lucide-react";
+import { Input } from "../components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "../components/ui/select";
 import CreateTaskModal from "@/components/ui/CreateTaskModal";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -174,8 +175,10 @@ const PlannerPage = () => {
   const fetchFilteredTasks = async (newFilters: any) => {
     try {
       const data = await filterTasks(newFilters);
-      setTasks(data.results || data);
-      console.log("Filtered API response:", data);
+      const result = data.results ?? data;
+      if (Array.isArray(result)) {
+        setTasks(result);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -276,16 +279,16 @@ const PlannerPage = () => {
             <Calendar className="w-4 h-4 text-gray-700" />
           </div>
 
-          <Select>
+          <Select onValueChange={(value) => applyFilters({ due_quarter: value })}>
             <SelectTrigger className="w-[130px] rounded-full border-gray-300 text-sm">
               <SelectValue placeholder="Quarter" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Quarters</SelectItem>
-              <SelectItem value="Q1">Q1 2025</SelectItem>
-              <SelectItem value="Q2">Q2 2025</SelectItem>
-              <SelectItem value="Q3">Q3 2025</SelectItem>
-              <SelectItem value="Q4">Q4 2025</SelectItem>
+              <SelectItem value="1">Q1</SelectItem>
+              <SelectItem value="2">Q2</SelectItem>
+              <SelectItem value="3">Q3</SelectItem>
+              <SelectItem value="4">Q4</SelectItem>
             </SelectContent>
           </Select>
 
@@ -299,21 +302,50 @@ const PlannerPage = () => {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
+        <div className="border rounded-sm border-gray-200 bg-white p-6">
+          <h1 className="text-xl mb-4">Total Tasks</h1>
+          <h1 className="text-4xl">24</h1>
+        </div>
+
+        <div className="border rounded-sm border-gray-200 bg-white p-6">
+          <h1 className="text-xl mb-4">To Do</h1>
+          <h1 className="text-4xl">8</h1>
+        </div>
+
+        <div className="border rounded-sm border-gray-200 bg-white p-6">
+          <h1 className="text-xl mb-4">In Progress</h1>
+          <h1 className="text-4xl">6</h1>
+        </div>
+
+        <div className="border rounded-sm border-gray-200 bg-white p-6">
+          <h1 className="text-xl mb-4">Completed</h1>
+          <h1 className="text-4xl">7</h1>
+        </div>
+
+        <div className="border rounded-sm border-gray-200 bg-white p-6">
+          <h1 className="text-xl mb-4">Blocked</h1>
+          <h1 className="text-4xl">3</h1>
+        </div>
+      </div>
+
       <div className="flex items-center gap-3 flex-wrap mt-4 px-2">
         {/* SEARCH */}
-        <input
-          type="text"
-          placeholder="Search tasks..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            fetchFilteredTasks({
-              ...filters,
-              search: e.target.value,
-            });
-          }}
-          className="border rounded-full px-4 py-2 text-sm w-[200px]"
-        />
+        <div className="relative flex-1 lg:flex-none lg:w-80">
+          <Input
+            placeholder="Search Tasks"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              fetchFilteredTasks({
+                ...filters,
+                search: e.target.value,
+              });
+            }}
+            className="pl-10 rounded-full border-gray-300 text-sm"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        </div>
 
         {/* STATUS FILTER */}
         <Select onValueChange={(value) => applyFilters({ status: value })}>
@@ -324,8 +356,8 @@ const PlannerPage = () => {
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="to_do">To Do</SelectItem>
             <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="in_review">In Review</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="blocked">Blocked</SelectItem>
           </SelectContent>
         </Select>
 

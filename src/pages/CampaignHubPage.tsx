@@ -2,13 +2,24 @@ import HeaderSection from "@/components/common/HeaderSection"
 import { Button } from "../components/ui/button";
 import { Plus, Calendar as CalendarIcon, Search, List, ArrowLeft, ArrowRight, Clock, MapPin, Edit, Trash2, Copy, Star } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
-import { getAllCampaign } from "@/api/CampaignHub";
+import { useCampaign } from "@/store/useCampaign";
 import { Card, CardContent } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Input } from "../components/ui/input";
 import AllCampaign from "@/components/ui/CampaingnHub/AllCampaign";
 import CreateCampaignDialog from "@/components/ui/CampaingnHub/CreateCampaign";
 import CalendarApp from "@/components/ui/CampaingnHub/CalenderView";
+import KanBanView from "@/components/ui/KanBanView";
+import KanBanCard from "@/components/ui/KanBanCard";
+import EditCampaign from "@/components/ui/EditCampaign";
+import { updateCampaign } from "@/api/CampaignHub";
+
+const campaignColumns = [
+  { key: "planning", title: "Planning" },
+  { key: "in_progress", title: "In Progress" },
+  { key: "completed", title: "Completed" },
+  { key: "upcoming", title: "Upcoming" },
+];
 
 const CampaignHubPage = () => {
 
@@ -18,13 +29,40 @@ const CampaignHubPage = () => {
   const [viewMode, setViewMode] = useState('list');
   const [activeTab, setActiveTab] = useState('all');
   const [isCreateCampaignOpen, setIsCreateCampaignOpen] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState("");
+  const [isCampaignDetailOpen, setIsCampaignDetailOpen] = useState(false);
   const calendarRef = useRef<any>(null);
 
+  const campaignsRaw = useCampaign((s: any) => s.campaigns);
+  const campaigns = Array.isArray(campaignsRaw) ? campaignsRaw : [];
+  const fetchCampaigns = useCampaign((s: any) => s.fetchCampaigns);
+  const filterCampaigns = useCampaign((s: any) => s.filterCampaigns);
 
-  useEffect(() => 
-  {
-    getAllCampaign();
-  }, [])
+  const handleCampaignStatusChange = async (id: string, status: string) => {
+    await updateCampaign(id, { status });
+    await fetchCampaigns();
+  };
+
+  useEffect(() => {
+    const hasFilters =
+      searchQuery.trim() !== "" ||
+      selectedType !== "all" ||
+      selectedStatus !== "all";
+
+    const handler = setTimeout(() => {
+      if (hasFilters) {
+        filterCampaigns({
+          search: searchQuery.trim(),
+          campaign_type: selectedType === "all" ? "" : selectedType,
+          status: selectedStatus === "all" ? "" : selectedStatus,
+        });
+      } else {
+        fetchCampaigns();
+      }
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery, selectedType, selectedStatus]);
 
   return (
     <div className="bg-neutral-50 flex flex-col h-full">
@@ -108,8 +146,7 @@ const CampaignHubPage = () => {
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="upcoming">Upcoming</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="follow-up">Follow Up</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
                     <SelectItem value="planning">Planning</SelectItem>
                   </SelectContent>
                 </Select>
@@ -167,6 +204,18 @@ const CampaignHubPage = () => {
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
+                  variant={viewMode === 'kanban' ? 'default' : 'outline'}
+                  className={`rounded-full ${viewMode === 'kanban'
+                    ? 'bg-[#1a2c47] text-white border-[#1a2c47] hover:bg-[#1a2c47]'
+                    : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-100'
+                    }`}
+                  onClick={() => setViewMode('kanban')}
+                >
+                  Kanban View
+                </Button>
+
+                <Button
+                  size="sm"
                   variant={viewMode === 'calendar' ? 'default' : 'outline'}
                   className={`rounded-full ${viewMode === 'calendar'
                     ? 'bg-[#1a2c47] text-white border-[#1a2c47] hover:bg-[#1a2c47]'
@@ -202,13 +251,43 @@ const CampaignHubPage = () => {
           >
             <CalendarApp calendarRef={calendarRef} />
           </div>
+        ) : viewMode === "kanban" ? (
+          <KanBanView
+            columns={campaignColumns}
+            items={campaigns}
+            getId={(c) => c.campaign_id}
+            getStatus={(c) => c.status}
+            onStatusChange={handleCampaignStatusChange}
+            renderCard={(c) => (
+              <KanBanCard
+                title={c.title}
+                description={c.description}
+                priority={c.priority}
+                category={c.campaign_type}
+                tags={c.tags ? c.tags.split(",").map((t: string) => t.trim()) : []}
+                startDate={c.start_date}
+                endDate={c.end_date}
+                location={c.location}
+                taskCount={c.task_count}
+                onClick={() => {
+                  setSelectedCampaignId(c.campaign_id);
+                  setIsCampaignDetailOpen(true);
+                }}
+              />
+            )}
+          />
         ) : (
-          <AllCampaign />
+          <AllCampaign campaigns={campaigns} />
         )}
       </div>
       <CreateCampaignDialog
         open={isCreateCampaignOpen}
         setOpen={setIsCreateCampaignOpen}
+      />
+      <EditCampaign
+        campaignId={selectedCampaignId}
+        isEventDetailOpen={isCampaignDetailOpen}
+        setIsEventDetailOpen={setIsCampaignDetailOpen}
       />
     </div>
   )

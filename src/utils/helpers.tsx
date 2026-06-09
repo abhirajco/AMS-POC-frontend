@@ -1,5 +1,70 @@
 import { Badge } from "@/components/ui/badge";
 import { Check, Image, FileVideo, FileText, Palette } from 'lucide-react';
+import { createElement, type ReactNode } from "react";
+
+// Tailwind's preflight strips default tag styling, so each supported tag gets
+// explicit classes to recreate how it would look in a rich-text editor.
+const HTML_TAG_CLASS: Record<string, string> = {
+  h1: "text-xl font-bold",
+  h2: "text-lg font-bold",
+  h3: "text-base font-semibold",
+  h4: "text-sm font-semibold",
+  h5: "text-sm font-semibold",
+  h6: "text-xs font-semibold uppercase tracking-wide",
+  p: "",
+  ul: "list-disc pl-5",
+  ol: "list-decimal pl-5",
+  li: "",
+  blockquote: "border-l-2 border-gray-300 pl-2 italic text-gray-600",
+  strong: "font-semibold",
+  b: "font-semibold",
+  em: "italic",
+  i: "italic",
+  u: "underline",
+  a: "text-blue-600 underline",
+  code: "bg-gray-100 px-1 rounded font-mono text-[0.9em]",
+};
+
+const SKIP_TAGS = new Set(["script", "style"]);
+
+const htmlNodeToReact = (node: ChildNode, key: number): ReactNode => {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+  if (node.nodeType !== Node.ELEMENT_NODE) return null;
+
+  const el = node as Element;
+  const tag = el.tagName.toLowerCase();
+  if (SKIP_TAGS.has(tag)) return null;
+
+  if (tag === "br") return createElement("br", { key });
+  if (tag === "hr") return createElement("hr", { key, className: "my-1 border-gray-200" });
+
+  const children = Array.from(el.childNodes).map((child, i) => htmlNodeToReact(child, i));
+  const className = HTML_TAG_CLASS[tag];
+
+  if (tag === "a") {
+    return createElement(
+      "a",
+      { key, href: el.getAttribute("href") ?? undefined, target: "_blank", rel: "noreferrer", className },
+      children
+    );
+  }
+
+  // Render known tags as themselves; anything unrecognised falls back to a
+  // plain span so its text still shows without odd block spacing.
+  const renderTag = className !== undefined ? tag : "span";
+  return createElement(renderTag, { key, className }, children);
+};
+
+
+export const renderHtmlContent = (html?: string | null): ReactNode => {
+  if (!html) return null;
+  if (typeof window === "undefined" || typeof window.DOMParser === "undefined") {
+    // No DOM available — strip tags so at least the text shows.
+    return html.replace(/<[^>]*>/g, "");
+  }
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return Array.from(doc.body.childNodes).map((node, i) => htmlNodeToReact(node, i));
+};
 
 export const normalizeStatus = (status: string): string => 
 {
@@ -75,15 +140,29 @@ export const getLeadStatusBadge = (status: string) => {
   }
 };
 
+export const getCEStatusBadge = (status: string) => {
+  const normalized = normalizeStatus(status).replace(/-/g, "_");
+  switch (normalized) {
+    case 'completed':
+      return <Badge className="text-xs" style={{ backgroundColor: '#dcfce7', color: '#16a34a' }}>Completed</Badge>;
+    case 'in_progress':
+      return <Badge className="text-xs" style={{ backgroundColor: '#dbeafe', color: '#2563eb' }}>In Progress</Badge>;
+    case 'upcoming':
+      return <Badge className="text-xs" style={{ backgroundColor: '#ede9fe', color: '#7c3aed' }}>Upcoming</Badge>;
+    case 'planning':
+      return <Badge className="text-xs" style={{ backgroundColor: '#fef9c3', color: '#ca8a04' }}>Planning</Badge>;
+    default:
+      return <Badge variant="outline" className="text-xs capitalize">{status}</Badge>;
+  }
+};
+
 export const getPriorityBadge = (priority: string) => {
   const normalized = (priority || '').toLowerCase();
   switch (normalized) {
     case 'high':
       return <Badge className="bg-[#C33142] text-white text-xs">High</Badge>;
-    case 'hot':
-      return <Badge className="bg-[#C33142] text-white text-xs">Hot</Badge>;
     case 'medium':
-      return <Badge variant="secondary" className="bg-gray-100 text-black text-xs">Medium</Badge>;
+      return <Badge variant="secondary" className="bg-yellow-500 text-white text-xs">Medium</Badge>;
     case 'low':
       return <Badge variant="outline" className="text-xs">Low</Badge>;
     default:
@@ -91,7 +170,8 @@ export const getPriorityBadge = (priority: string) => {
   }
 };
 
-export const getAssetTypeIcon = (type: string) => {
+
+ export const getAssetTypeIcon = (type: string) => {
   switch (type) {
     case 'Image':
       return <Image className="w-4 h-4" />;

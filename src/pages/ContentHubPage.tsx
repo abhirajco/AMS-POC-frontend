@@ -576,11 +576,12 @@
 
 import HeaderSection from "@/components/common/HeaderSection";
 import { Button } from "@/components/ui/button";
-import { Plus, Star } from 'lucide-react';
+import { Plus, Star, Search } from 'lucide-react';
 import AllContent from "@/components/ui/AllContent";
 import { useState, useEffect } from "react";
 import { BASE_URL } from "@/utils/BASE_URL";
 import CreateContent from "@/components/ui/ContentHub/CreateContent";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 
@@ -597,6 +598,7 @@ const ContentHubPage = () => {
   const [status, setStatus] = useState("all");
   const [type, setType] = useState("all");
   const [quarter, setQuarter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -683,21 +685,30 @@ console.log("stats url", res.url);
           <h1 className="text-4xl">{stats.in_review}</h1>
         </div>
 
-        <div className="border rounded-sm border-gray-200 bg-white p-6">
-          <h1 className="text-xl mb-4">Published</h1>
-          <h1 className="text-4xl">{stats.published}</h1>
-        </div>
-
-        <div className="border rounded-sm border-gray-200 bg-white p-6">
+         <div className="border rounded-sm border-gray-200 bg-white p-6">
           <h1 className="text-xl mb-4">Approved</h1>
           <h1 className="text-4xl">{stats.approved}</h1>
         </div>
+
+        <div className="border rounded-sm border-gray-200 bg-white p-6">
+          <h1 className="text-xl mb-4">Published</h1>
+          <h1 className="text-4xl">{stats.published}</h1>
+        </div>    
       </div>
 
-      <div className="mt-4 flex justify-between">
+      <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1 min-w-0">
+          <Input
+            placeholder="Search Content"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 rounded-full border-gray-300 text-sm"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+        </div>
 
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="h-10 rounded-full border border-gray-300 px-4 text-sm">
+          <SelectTrigger className="h-10 w-32 shrink-0 rounded-full border border-gray-300 px-4 text-sm">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
 
@@ -711,38 +722,37 @@ console.log("stats url", res.url);
           </SelectContent>
         </Select>
 
-         
+        <Select value={quarter} onValueChange={setQuarter}>
+          <SelectTrigger className="h-10 w-32 shrink-0 rounded-full border border-gray-300 px-4 text-sm">
+            <SelectValue placeholder="All Quarters" />
+          </SelectTrigger>
 
-          <Select value={quarter} onValueChange={setQuarter}>
-            <SelectTrigger className="h-10 rounded-full border border-gray-300 px-4 text-sm">
-              <SelectValue placeholder="All Quarters" />
-            </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Quarters</SelectItem>
+            <SelectItem value="1">Q1</SelectItem>
+            <SelectItem value="2">Q2</SelectItem>
+            <SelectItem value="3">Q3</SelectItem>
+            <SelectItem value="4">Q4</SelectItem>
+          </SelectContent>
+        </Select>
 
-            <SelectContent>
-              <SelectItem value="all">All Quarters</SelectItem>
-              <SelectItem value="1">Q1</SelectItem>
-              <SelectItem value="2">Q2</SelectItem>
-              <SelectItem value="3">Q3</SelectItem>
-              <SelectItem value="4">Q4</SelectItem>
-            </SelectContent>
-          </Select>
         <Select value={type} onValueChange={setType}>
-  <SelectTrigger className="h-10 rounded-full border border-gray-300 px-4 text-sm">
-    <SelectValue placeholder="All Types" />
-  </SelectTrigger>
+          <SelectTrigger className="h-10 w-32 shrink-0 rounded-full border border-gray-300 px-4 text-sm">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
 
-  <SelectContent>
-    <SelectItem value="all">All Types</SelectItem>
-    <SelectItem value="case_study">Case Study</SelectItem>
-    <SelectItem value="blog">Blog</SelectItem>
-    <SelectItem value="social">Social</SelectItem>
-    <SelectItem value="white_paper">White Paper</SelectItem>
-  </SelectContent>
-</Select>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="case_study">Case Study</SelectItem>
+            <SelectItem value="blog">Blog</SelectItem>
+            <SelectItem value="social">Social</SelectItem>
+            <SelectItem value="white_paper">White Paper</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>
-        <AllContent status={status} type={type} quarter={quarter} />
+        <AllContent status={status} type={type} quarter={quarter} search={searchQuery} />
       </div>
       <CreateContent
         open={open}

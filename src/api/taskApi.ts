@@ -35,7 +35,10 @@ export const getTaskDetail = async (taskId: string) => {
 };
 
 export const filterTasks = async (params: Record<string, any>) => {
-  const query = new URLSearchParams(params).toString();
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "")
+  );
+  const query = new URLSearchParams(cleaned).toString();
   const res = await fetch(`${BASE_URL}/board/tasks/filter/?${query}`, {
     method: "GET",
     credentials: "include",
@@ -76,4 +79,30 @@ export const apiFetch = async (
     console.error("RAW RESPONSE:", text);
     throw new Error("Invalid JSON response");
   }
+};
+
+
+export const filterContents = async (params: Record<string, any>) => {
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(
+      ([, v]) => v !== undefined && v !== null && v !== ""
+    )
+  );
+
+  const query = new URLSearchParams(cleaned).toString();
+
+  const res = await fetch(
+    `${BASE_URL}/content/contents/filter/?${query}`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: cookieHeaders(),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to filter contents: ${res.status}`);
+  }
+
+  return await res.json();
 };

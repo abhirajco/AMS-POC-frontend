@@ -176,7 +176,7 @@ const CreateCampaignDialog = ({ open, setOpen }: any) => {
                                 <SelectContent>
                                     <SelectItem value="upcoming">Upcoming</SelectItem>
                                     <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="past">Past</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
                                     <SelectItem value="planning">Planning</SelectItem>
                                 </SelectContent>
                             </Select>

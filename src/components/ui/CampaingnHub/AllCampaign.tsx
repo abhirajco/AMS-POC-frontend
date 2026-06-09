@@ -1,54 +1,23 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useCampaign } from "@/store/useCampaign";
 import { Card, CardContent } from "@mui/material";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, MapPin } from "lucide-react";
 import EditCampaign from "../EditCampaign";
+import { getPriorityBadge } from "@/utils/helpers";
+import { getCEStatusBadge } from "@/utils/helpers";
 
-
-const AllCampaign = () => {
-  const campaigns = useCampaign((s: any) => s.campaigns);
-  const fetchCampaigns = useCampaign((s: any) => s.fetchCampaigns);
+const AllCampaign = ({ campaigns: campaignsProp }: { campaigns?: any[] } = {}) => {
+  const campaignsRaw = useCampaign((s: any) => s.campaigns);
+  const campaigns = campaignsProp ?? (Array.isArray(campaignsRaw) ? campaignsRaw : []);
   const isLoading = useCampaign((s: any) => s.isLoading);
   const error = useCampaign((s: any) => s.error);
   const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
 
-  useEffect(() => {
-    fetchCampaigns();
-  }, []);
-
   const handleCampaignClick = (campaignId: string) => {
     setSelectedCampaignId(campaignId);
     setIsEventDetailOpen(true);
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'In Progress':
-        return <Badge className="bg-blue-100 text-blue-800 text-xs">In Progress</Badge>;
-      case 'Upcoming':
-        return <Badge className="bg-green-100 text-green-800 text-xs">Upcoming</Badge>;
-      case 'Follow Up':
-        return <Badge className="bg-orange-100 text-orange-800 text-xs">Follow Up</Badge>;
-      case 'Planning':
-        return <Badge className="bg-purple-100 text-purple-800 text-xs">Planning</Badge>;
-      default:
-        return <Badge variant="outline" className="text-xs">{status}</Badge>;
-    }
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'High':
-        return <Badge className="bg-red-600 text-white text-xs">High</Badge>;
-      case 'Medium':
-        return <Badge className="bg-yellow-500 text-white text-xs">Medium</Badge>;
-      case 'Low':
-        return <Badge className="bg-gray-500 text-white text-xs">Low</Badge>;
-      default:
-        return <Badge variant="outline" className="text-xs">{priority}</Badge>;
-    }
   };
 
   if (isLoading) return <div>Loading...</div>;
@@ -66,7 +35,7 @@ const AllCampaign = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h3 className="text-lg text-black">{campaign.title}</h3>
-                  {getStatusBadge(campaign.status)}
+                  {getCEStatusBadge(campaign.status)}
                   {getPriorityBadge(campaign.priority)}
                 </div>
                 <p className="text-sm text-gray-600 mb-3">{campaign.description}</p>

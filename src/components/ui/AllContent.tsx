@@ -11,9 +11,10 @@ type props = {
     status: string;
     type: string;
     quarter: string;
+    search: string;
 };
 
-const AllContent = ({ status, type, quarter }: props) => {
+const AllContent = ({ status, type, quarter, search }: props) => {
 
     const { contents, isLoading, fetchContents, } = useContentStore();
     const navigate = useNavigate();
@@ -55,12 +56,17 @@ const AllContent = ({ status, type, quarter }: props) => {
     };
 
     useEffect(() => {
-        fetchContents({
-            status: status !== "all" ? status : undefined,
-            content_type: type !== "all" ? type : undefined,
-            quarter: quarter ? Number(quarter) : undefined,
-        });
-    }, [status, type, quarter]);
+        const handler = setTimeout(() => {
+            fetchContents({
+                search: search.trim() || undefined,
+                status: status !== "all" ? status : undefined,
+                content_type: type !== "all" ? type : undefined,
+                quarter: quarter ? Number(quarter) : undefined,
+            });
+        }, 400);
+
+        return () => clearTimeout(handler);
+    }, [status, type, quarter, search]);
 
 
     // return (

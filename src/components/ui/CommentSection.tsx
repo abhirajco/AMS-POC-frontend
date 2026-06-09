@@ -1190,6 +1190,13 @@ const CommentItem = memo(({
           </div>
         ) : (
           <>
+            {comment.selected_text && (
+              <div className="pl-8 sm:pl-9">
+                <div className="border-l-2 border-blue-400 bg-blue-50 text-gray-600 text-[10px] sm:text-[11px] italic px-2 py-1 rounded-r mb-1">
+                  "{comment.selected_text}"
+                </div>
+              </div>
+            )}
             <p className="text-[11px] sm:text-[12px] text-gray-700 leading-relaxed pl-8 sm:pl-9">
               {renderCommentText(comment.text)}
             </p>
@@ -1303,6 +1310,7 @@ const CommentSection = ({ id }: { id: string }) => {
   const [newComment, setNewComment] = useState('');
   const [mentionMap, setMentionMap] = useState<Record<string, string>>({});
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -1468,9 +1476,10 @@ const CommentSection = ({ id }: { id: string }) => {
     }
   };
 
-  const addComment = async (comment: string, replyTo?: string | null) => {
+  const addComment = async (comment: string, replyTo?: string | null, selected?: string) => {
     const body: Record<string, string> = { comment_text: comment };
     if (replyTo) body.reply_to = replyTo;
+    if (selected) body.selected_text = selected;
 
     try {
       const res = await fetch(`${BASE_URL}/content/contents/${id}/comment/`, {
@@ -1554,9 +1563,10 @@ const CommentSection = ({ id }: { id: string }) => {
     if (!newComment.trim()) return;
     let final = newComment;
     Object.entries(mentionMap).forEach(([k, v]) => { final = final.replace(k, v); });
-    await addComment(final);
+    await addComment(final, null, selectedText);
     setNewComment('');
     setMentionMap({});
+    setSelectedText('');
   };
 
   const handleReplyTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -1600,6 +1610,26 @@ const CommentSection = ({ id }: { id: string }) => {
 
   useEffect(() => { fetchCommentHistory(id); }, []);
 
+  // Capture text selected inside the rich text editor (.ProseMirror) so it can
+  // be attached to a comment. We only update on a non-empty selection within the
+  // editor and never auto-clear, so the selection persists while the user types
+  // the comment. Cleared explicitly via the chip's ✕ or after posting.
+  useEffect(() => {
+    const captureSelection = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) return;
+      const text = sel.toString().trim();
+      if (!text) return;
+      const anchor = sel.anchorNode;
+      const el = anchor instanceof Element ? anchor : anchor?.parentElement;
+      if (el && el.closest('.ProseMirror')) {
+        setSelectedText(text);
+      }
+    };
+    document.addEventListener('selectionchange', captureSelection);
+    return () => document.removeEventListener('selectionchange', captureSelection);
+  }, []);
+
   const sharedItemProps = {
     openMenuId,
     editingCommentId,
@@ -1636,7 +1666,6 @@ const CommentSection = ({ id }: { id: string }) => {
     onReplySubmit: handleReplySubmit,
     onReplyCancel: () => { setReplyToCommentId(null); setReplyText(''); },
     getRepliesFor,
-    onResolve: resolveComment
   };
 
   return (
@@ -1648,6 +1677,21 @@ const CommentSection = ({ id }: { id: string }) => {
               <Label className="text-[11px] sm:text-[12px] font-semibold text-gray-600 mb-2 block">
                 Add Comment
               </Label>
+              {selectedText && (
+                <div className="flex items-start gap-2 mb-2 border-l-2 border-blue-400 bg-blue-50 rounded-r px-2 py-1">
+                  <p className="flex-1 text-[10px] sm:text-[11px] italic text-gray-600 line-clamp-3">
+                    "{selectedText}"
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedText('')}
+                    className="text-gray-400 hover:text-gray-600 text-xs leading-none shrink-0"
+                    aria-label="Remove selected text"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
               <div>
                 <Textarea
                   placeholder="Leave feedback or suggestions..."
