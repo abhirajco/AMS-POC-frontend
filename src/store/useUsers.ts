@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { getAllExecutive } from "@/api/Users";
-import { getAllWriter } from "@/api/Users";
 
 interface UserStore {
   executives: any[];

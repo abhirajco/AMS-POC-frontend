@@ -266,7 +266,7 @@ export const assignSme = async (
 };
 
 
-export const getAllContents = async (filters: ContentFilters) => {
+export const getAllContents = async (filters: ContentFilters = {}) => {
   const params = new URLSearchParams();
 
   Object.entries(filters).forEach(([key, value]) => {

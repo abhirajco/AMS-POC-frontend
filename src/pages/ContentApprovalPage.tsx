@@ -420,9 +420,8 @@ import HeaderSection from "@/components/common/HeaderSection";
 import { useParams } from "react-router-dom";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { useState, useEffect } from "react";
-import { Box, TextField, Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Menu, MenuItem, } from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { Toaster, toast } from "sonner";
+import { TextField, Dialog, DialogTitle, DialogContent, DialogActions, } from "@mui/material";
+import { toast } from "sonner";
 import ApprovalTextEditor from "@/components/ui/ApprovalTextEditor";
 import CommentSection from "@/components/ui/CommentSection";
 import { Card, CardContent } from "@/components/ui/card";
@@ -436,8 +435,6 @@ const ContentApprovalPage = () => {
   const [body, setBody] = useState("");
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState("");
-  const [comment, setComment] = useState("");
-  const [comments, setComments] = useState([]);
 
 
   const rejectContent = async () => {
@@ -592,7 +589,7 @@ const ContentApprovalPage = () => {
 
         {/* RIGHT → Comments */}
         <div className=" w-80 ">
-          <CommentSection id={id} />
+          <CommentSection id={id ?? ""} />
         </div>
       </div>
       <Dialog open={rejectOpen} onClose={() => setRejectOpen(false)}>

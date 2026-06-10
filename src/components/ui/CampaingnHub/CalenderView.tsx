@@ -706,30 +706,13 @@
 //     </>
 //   );
 // }
-import { Chip, Avatar } from "@mui/material";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DeleteIcon from "@mui/icons-material/Delete";
-import AddIcon from "@mui/icons-material/Add";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from "@mui/material";
 import { EventClickArg, EventDropArg} from "@fullcalendar/core";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
-import { EventApi } from "@fullcalendar/core";
-import { Typography } from "@mui/material";
-import { Box } from "@mui/material";
-//import { EditableField } from "./InlineEditableField";
-import SaveIcon from "@mui/icons-material/Save";
-import CreateCampaignDialog from "@/components/ui/CampaingnHub/CreateCampaign";
 import { useCampaign } from "@/store/useCampaign";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -851,11 +834,15 @@ const mapCampaignToCalendarEvent = (campaign: any): CalendarEvent => {
 
 type Props = {
   calendarRef: React.RefObject<FullCalendar>;
+  /** Called with the campaign_id when an existing event is clicked. */
+  onEventClick?: (campaignId: string) => void;
+  /** Called with the clicked date (YYYY-MM-DD) when the cell "+" is pressed. */
+  onCreateClick?: (date: string) => void;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const CalendarApp: React.FC<Props> = ({ calendarRef }) => {
+const CalendarApp: React.FC<Props> = ({ calendarRef, onEventClick, onCreateClick }) => {
   // ── Zustand ──────────────────────────────────────────────────────────────
   const campaigns = useCampaign((s: any) => s.campaigns);
 
@@ -876,107 +863,23 @@ const CalendarApp: React.FC<Props> = ({ calendarRef }) => {
 
   // ── Local state ───────────────────────────────────────────────────────────
   const [events, setEvents] = useState(() => mapToCalendarEvents(campaigns ?? []));
-  const [selectedEvent, setSelectedEvent] = useState<EventApi | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form, setForm] = useState<Partial<CalendarEvent>>({});
-
-  // CreateCampaign dialog
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [defaultDate, setDefaultDate] = useState<string>("");
 
   // Hover state for the + icon on date cells
   const hoveredDateRef = useRef<string | null>(null);
 
   // ── Sync events when campaigns change in store ────────────────────────────
-  // (If your store is reactive, this effect keeps the calendar in sync)
+  useEffect(() => {
+    setEvents(mapToCalendarEvents(campaigns ?? []));
+  }, [campaigns, mapToCalendarEvents]);
+
+  // (legacy commented sync kept for reference)
   // useEffect(() => {
   //   setEvents(mapToCalendarEvents(campaigns ?? []));
   // }, [campaigns, mapToCalendarEvents]);
 
-  // ── Color helpers (unchanged from original) ───────────────────────────────
-  const getStatusChipSx = (status: CalendarEvent["status"]) => {
-    const map: Record<CalendarEvent["status"], { bg: string; color: string }> = {
-      Completed: { bg: "#dcfce7", color: "#16a34a" },
-      "In Progress": { bg: "#dbeafe", color: "#2563eb" },
-      Upcoming: { bg: "#ede9fe", color: "#7c3aed" },
-      Planning: { bg: "#fef9c3", color: "#ca8a04" },
-      "Follow Up": { bg: "#ffedd5", color: "#ea580c" },
-    };
-    const s = map[status];
-    return { backgroundColor: s.bg, color: s.color, fontWeight: 600, border: "none" };
-  };
-
-  const getPriorityChipSx = (priority: CalendarEvent["priority"]) => {
-    const map: Record<CalendarEvent["priority"], { bg: string; color: string }> = {
-      High: { bg: "#fee2e2", color: "#dc2626" },
-      Medium: { bg: "#fef3c7", color: "#d97706" },
-      Low: { bg: "#dcfce7", color: "#16a34a" },
-    };
-    const p = map[priority];
-    return { backgroundColor: p.bg, color: p.color, fontWeight: 600, border: "none" };
-  };
-
-  const getMilestoneChipSx = (status: Milestone["status"]) => {
-    const map: Record<Milestone["status"], { bg: string; color: string }> = {
-      Completed: { bg: "#1e293b", color: "#fff" },
-      "In Progress": { bg: "#dbeafe", color: "#2563eb" },
-      "Not Started": { bg: "#f1f5f9", color: "#64748b" },
-    };
-    const s = map[status];
-    return { backgroundColor: s.bg, color: s.color, fontWeight: 600, fontSize: "0.7rem" };
-  };
-
-  // ── Event click → open detail modal ──────────────────────────────────────
+  // ── Event click → let the parent open the unified detail dialog ───────────
   const handleEventClick = (info: EventClickArg) => {
-    const ep = info.event.extendedProps as CalendarEvent;
-    setSelectedEvent(info.event);
-    setForm({ ...ep, date: info.event.startStr });
-    setIsModalOpen(true);
-  };
-
-  // ── Save edits ────────────────────────────────────────────────────────────
-  const handleSave = () => {
-    if (!selectedEvent) return;
-    setEvents((prev) =>
-      prev.map((e) => {
-        if (e.id !== selectedEvent.id) return e;
-        const rawDate = form.date ?? e.extendedProps?.date;
-        const eventDateStr = form.eventDate ?? e.extendedProps?.eventDate;
-        let newDate = rawDate;
-        if (eventDateStr) {
-          const parts = eventDateStr.split("-");
-          newDate =
-            parts.length === 3 && parts[2].length === 4
-              ? `${parts[2]}-${parts[1]}-${parts[0]}`
-              : eventDateStr;
-        }
-        return {
-          ...e,
-          title: form.title ?? e.title,
-          start: newDate,
-          end: newDate,
-          extendedProps: { ...e.extendedProps, ...form, date: newDate },
-        };
-      })
-    );
-    setIsModalOpen(false);
-  };
-
-  const handleDelete = () => {
-    if (!selectedEvent) return;
-    setEvents((prev) => prev.filter((e) => e.id !== selectedEvent.id));
-    setIsModalOpen(false);
-  };
-
-  const handleDuplicate = () => {
-    if (!selectedEvent) return;
-    const original = events.find((e) => e.id === selectedEvent.id);
-    if (!original) return;
-    setEvents((prev) => [
-      ...prev,
-      { ...original, id: String(Date.now()), title: `${original.title} (Copy)` },
-    ]);
-    setIsModalOpen(false);
+    onEventClick?.(info.event.id);
   };
 
   const handleEventDrop = (info: EventDropArg) => {
@@ -1065,8 +968,7 @@ const CalendarApp: React.FC<Props> = ({ calendarRef }) => {
 
     btn.addEventListener("click", (ev) => {
       ev.stopPropagation();
-      setDefaultDate(date);
-      setCreateDialogOpen(true);
+      onCreateClick?.(date);
     });
   };
 
@@ -1102,8 +1004,6 @@ const CalendarApp: React.FC<Props> = ({ calendarRef }) => {
       });
     }
   };
-
-  const ep = selectedEvent?.extendedProps as CalendarEvent | undefined;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -1184,13 +1084,6 @@ const CalendarApp: React.FC<Props> = ({ calendarRef }) => {
           }}
         />
       </div>
-
-      {/* ── Create Campaign Dialog ──────────────────────────────────────────── */}
-      <CreateCampaignDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
-        defaultDate={defaultDate}   // pass the clicked date if CreateCampaignDialog accepts it
-      />
     </>
   );
 };

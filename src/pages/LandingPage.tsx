@@ -97,7 +97,7 @@ import StickyHeader from "@/components/ui/StickyHeader";
 import StickyFooter from "@/components/ui/StickyFooter";
 import amslogo from "@/assets/images/Adromarketlogo.png";
 //import amsLogo from "@/assets/images/ams-logo.png";
-import { Search, CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "../components/ui/button";
 //import { toast } from "sonner";
 import {Link} from "react-router-dom";

@@ -13,19 +13,9 @@ import { getCampaignEvents } from "@/api/CampaignHub";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-interface Campaign {
-  campaign_id: string;
-  title: string;
-}
-
 interface Event {
   event_id: string;
   title: string;
-}
-
-interface Executive {
-  user_id: string;
-  full_name: string;
 }
 
 

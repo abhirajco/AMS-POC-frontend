@@ -28,9 +28,13 @@ export const getAllCampaign = async () => {
     }
 
     if (response.status === 401) {
-      localStorage.clear();
+      localStorage.removeItem("user");
       window.location.href = "/login";
-      throw new Error(data?.message || data?.detail || "Session expired. Please login again.");
+      throw new Error(
+        data?.message ||
+        data?.detail ||
+        "Session expired. Please login again."
+      );
     }
 
     if (response.status === 403) {
@@ -39,7 +43,12 @@ export const getAllCampaign = async () => {
     }
 
     if (response.status === 404) {
-      toast.error(data?.message || data?.detail || "Campaigns not found.");
+      toast.error(
+        data?.message ||
+        data?.detail ||
+        "Campaigns not found."
+      );
+
       throw new Error("Campaigns not found.");
     }
 
@@ -60,10 +69,10 @@ export const getAllCampaign = async () => {
     if (error.message !== "Session expired. Please login again.") {
       toast.error(error.message || "Something went wrong.");
     }
+
     throw error;
   }
 };
-
 
 export const createCampaign = async (campaignData: any) => {
   try {
@@ -131,14 +140,23 @@ export const getSelectedCampaign = async (campaignId: string) => {
     }
 
     if (response.status === 401) {
-      localStorage.clear();
+      localStorage.removeItem("user");
       window.location.href = "/login";
       throw new Error(data?.message || "Session expired. Please login again.");
     }
 
     if (response.status === 403) {
-      toast.error(data?.message || data?.detail || "You are not authorized to access this campaign.");
-      throw new Error(data?.message || data?.detail || "Forbidden access.");
+      toast.error(
+        data?.message ||
+          data?.detail ||
+          "You are not authorized to access this campaign."
+      );
+
+      throw new Error(
+        data?.message ||
+          data?.detail ||
+          "Forbidden access."
+      );
     }
 
     if (response.status === 404) {
@@ -171,7 +189,7 @@ export const getSelectedCampaign = async (campaignId: string) => {
 
 export const deleteCampaign = async (campaignId: string) => {
   try {
-    const response = await fetch(`${BASE_URL}/board/campaigns/${campaignId}`, {
+    const response = await fetch(`${BASE_URL}/board/campaigns/${campaignId}/`, {
       method: "DELETE",
       credentials: "include",
       headers: {
@@ -248,23 +266,51 @@ export const updateCampaign = async (campaignId: string, updatedData: any) => {
     }
 
     if (response.status === 401) {
-      localStorage.clear();
+      localStorage.removeItem("user");
       window.location.href = "/login";
-      throw new Error(data?.message || data?.detail || "Session expired. Please login again.");
+
+      throw new Error(
+        data?.message ||
+          data?.detail ||
+          "Session expired. Please login again."
+      );
     }
 
     if (response.status === 403) {
-      toast.error(data?.message || data?.detail || "You are not authorized to update this campaign.");
-      throw new Error(data?.message || data?.detail || "Forbidden access.");
+      toast.error(
+        data?.message ||
+          data?.detail ||
+          "You are not authorized to update this campaign."
+      );
+
+      throw new Error(
+        data?.message ||
+          data?.detail ||
+          "Forbidden access."
+      );
     }
 
     if (response.status === 400) {
-      toast.error(data?.message || data?.detail || "Invalid campaign data.");
-      throw new Error(data?.message || data?.detail || "Bad request.");
+      toast.error(
+        data?.message ||
+          data?.detail ||
+          "Invalid campaign data."
+      );
+
+      throw new Error(
+        data?.message ||
+          data?.detail ||
+          "Bad request."
+      );
     }
 
     if (response.status === 404) {
-      toast.error(data?.message || data?.detail || "Campaign not found.");
+      toast.error(
+        data?.message ||
+          data?.detail ||
+          "Campaign not found."
+      );
+
       throw new Error("Campaign not found.");
     }
 
@@ -274,8 +320,17 @@ export const updateCampaign = async (campaignId: string, updatedData: any) => {
     }
 
     if (!response.ok) {
-      toast.error(data?.message || data?.detail || "Failed to update campaign.");
-      throw new Error(data?.message || data?.detail || "API request failed.");
+      toast.error(
+        data?.message ||
+          data?.detail ||
+          "Failed to update campaign."
+      );
+
+      throw new Error(
+        data?.message ||
+          data?.detail ||
+          "API request failed."
+      );
     }
 
     toast.success(data?.message || "Campaign updated successfully.");
@@ -286,6 +341,7 @@ export const updateCampaign = async (campaignId: string, updatedData: any) => {
     if (error.message !== "Session expired. Please login again.") {
       toast.error(error.message || "Something went wrong.");
     }
+
     throw error;
   }
 };
@@ -311,7 +367,7 @@ export const getCampaignEvents = async (campaignId: string) => {
     }
 
     if (res.status === 401) {
-      localStorage.clear();
+      localStorage.removeItem("user");
       window.location.href = "/login";
       throw new Error(data?.message || data?.detail || "Session expired. Please login again.");
     }
@@ -332,7 +388,11 @@ export const getCampaignEvents = async (campaignId: string) => {
     }
 
     if (!res.ok) {
-      throw new Error(data?.message || data?.detail || "Failed to fetch campaign events");
+      throw new Error(
+        data?.message ||
+        data?.detail ||
+        "Failed to fetch campaign events"
+      );
     }
 
     return data;
@@ -363,9 +423,14 @@ export const getCampaignTasks = async (campaignId: string) => {
     }
 
     if (res.status === 401) {
-      localStorage.clear();
+      localStorage.removeItem("user");
       window.location.href = "/login";
-      throw new Error(data?.message || "Session expired. Please login again.");
+
+      throw new Error(
+        data?.message ||
+        data?.detail ||
+        "Session expired. Please login again."
+      );
     }
 
     if (res.status === 403) {
@@ -426,4 +491,124 @@ export const filterCampaigns = async (params: Record<string, any>) => {
     console.error("FILTER CAMPAIGNS ERROR:", err);
     throw err;
   }
+};
+
+export const getCampaignHistoryById = async (
+  campaignId: string
+) => {
+  try {
+
+    console.log("Callin gthe APiu which fetches the history  $$$$$$$$$$$$$$$$$$$")
+    const response = await fetch(
+      `${BASE_URL}/board/campaigns/${campaignId}/history/`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+        },
+      }
+    );
+
+    let data = null;
+
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (response.status === 401) {
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+
+      throw new Error(
+        data?.message ||
+          data?.detail ||
+          "Session expired. Please login again."
+      );
+    }
+
+    if (response.status === 403) {
+      toast.error(
+        data?.message ||
+          data?.detail ||
+          "You are not authorized to access this campaign history."
+      );
+
+      throw new Error(
+        data?.message ||
+          data?.detail ||
+          "Forbidden access."
+      );
+    }
+
+    if (response.status === 404) {
+      toast.error(
+        data?.message ||
+          data?.detail ||
+          "Campaign history not found."
+      );
+
+      throw new Error("Campaign history not found.");
+    }
+
+    if (response.status >= 500) {
+      toast.error(
+        "Internal server error. Please try again later."
+      );
+
+      throw new Error("Internal server error.");
+    }
+
+    if (!response.ok) {
+      toast.error(
+        data?.message ||
+          data?.detail ||
+          "Failed to fetch campaign history."
+      );
+
+      throw new Error(
+        data?.message ||
+          data?.detail ||
+          "API request failed."
+      );
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error(
+      "Get Campaign History Error:",
+      error
+    );
+
+    if (
+      error.message !==
+      "Session expired. Please login again."
+    ) {
+      toast.error(
+        error.message || "Something went wrong."
+      );
+    }
+
+    throw error;
+  }
+};
+
+
+export const getTeamMembers = async (query: string) => {
+  const response = await fetch(`${BASE_URL}/api/accounts/users/search/?search=${query}`,
+    {
+      credentials: "include",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to search users"
+    );
+  }
+
+  return response.json();
 };

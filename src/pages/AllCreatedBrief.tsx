@@ -1,12 +1,10 @@
 import HeaderSection from "@/components/common/HeaderSection"
 import { BASE_URL } from "@/utils/BASE_URL";
 import { useEffect, useState } from "react";
-import { Popover, Box, FormControl, InputLabel, Select, MenuItem, Button, Typography, TextField } from "@mui/material";
+import { Popover, Box, FormControl, InputLabel, Select, MenuItem, Button, TextField } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { getStatusBadge as getStatusBadgeHelper, normalizeStatus } from "@/utils/helpers";
 import { toast } from "sonner";
-import { getCsrfToken, setCsrfToken } from "@/utils/csrf";
+import { getCsrfToken } from "@/utils/csrf";
 import { getStatusBadge } from "@/utils/helpers";
 
 const AllCreatedBrief = () => {
@@ -108,10 +106,6 @@ const AllCreatedBrief = () => {
             console.error(err);
         }
     }
-
-    const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
 
     const handleClose = () => {
         setAnchorEl(null);
@@ -263,11 +257,10 @@ const AllCreatedBrief = () => {
                 }
             );
 
-            let data2: any = {};
             try {
-                data2 = await res2.json();
+                await res2.json();
             } catch {
-                data2 = {};
+                // ignore non-JSON response body
             }
 
             if (!res2.ok) {

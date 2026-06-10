@@ -349,10 +349,6 @@ const CommentSection = ({ id }: { id: string }) => {
   const [replyMentionUsers, setReplyMentionUsers] = useState<User[]>([]);
   const [showReplyDropdown, setShowReplyDropdown] = useState(false);
 
-  const convertBackendToDisplay = (text: string) => {
-    return text.replace(/@\[(.*?)\]\((.*?)\)/g, '@$1');
-  };
-
   const fetchCommentHistory = async (contentId: string) => {
     if (!contentId) return;
     try {

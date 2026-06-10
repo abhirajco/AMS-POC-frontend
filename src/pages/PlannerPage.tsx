@@ -12,7 +12,6 @@ import EditTaskModal from "@/components/ui/EditableTaskModel";
 import { Calendar as BigCalendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import CreateTask from "@/components/ui/PlannerHub/CreateTask";
 import { getPriorityBadge } from "@/utils/helpers";
 const localizer = momentLocalizer(moment);
 

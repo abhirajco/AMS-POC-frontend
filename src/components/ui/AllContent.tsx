@@ -1,9 +1,9 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
-import { getStatusBadge, normalizeStatus } from "@/utils/helpers";
+import { normalizeStatus } from "@/utils/helpers";
 import { Badge } from "@/components/ui/badge";
 import { useContentStore } from "@/store/useContent";
 
@@ -16,7 +16,7 @@ type props = {
 
 const AllContent = ({ status, type, quarter, search }: props) => {
 
-    const { contents, isLoading, fetchContents, } = useContentStore();
+    const { contents, fetchContents, } = useContentStore();
     const navigate = useNavigate();
 
     const getApprovalText = (item: any) => {

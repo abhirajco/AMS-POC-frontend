@@ -2,7 +2,7 @@ import { Input } from "../ui/input";
 import { Search, Bell } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { IconButton, Menu, MenuItem, Badge, Typography, Divider } from "@mui/material";
+import { IconButton, Menu, MenuItem, Badge } from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
 
 const HeaderSection = () => {

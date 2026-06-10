@@ -7,7 +7,6 @@ import { BASE_URL } from "@/utils/BASE_URL";
 import CreateContent from "@/components/ui/ContentHub/CreateContent";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNavigate } from "react-router-dom";
 
 
 const ContentHubPage = () => {
@@ -24,7 +23,6 @@ const ContentHubPage = () => {
   const [quarter, setQuarter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
 
  const fetchNumberOfDifferentContent = async () => {
   try {
@@ -50,10 +48,6 @@ console.log("stats url", res.url);
 
   const handleOpen = () => {
     setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
   };
 
   useEffect(() => {

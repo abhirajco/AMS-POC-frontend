@@ -5,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import { useNavigate } from "react-router-dom"
 import { BASE_URL } from "@/utils/BASE_URL";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const SidebarNavigation = () => {
 
-  const [sideBarOpen, setSideBarOpen] = useState(true);
+  const [sideBarOpen] = useState(true);
   const [campaignDropdownOpen, setCampaignDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "null");
