@@ -6,6 +6,7 @@ import { CalendarIcon, MapPin } from "lucide-react";
 import EditCampaign from "../EditCampaign";
 import { getPriorityBadge } from "@/utils/helpers";
 import { getCEStatusBadge } from "@/utils/helpers";
+import { renderHtmlContent } from "@/utils/helpers";
 
 const AllCampaign = (
   { campaigns: campaignsProp, onCampaignClick }: {
@@ -49,7 +50,7 @@ const AllCampaign = (
                   {getCEStatusBadge(campaign.status)}
                   {getPriorityBadge(campaign.priority)}
                 </div>
-                <p className="text-sm text-gray-600 mb-3">{campaign.description}</p>
+                <div className="text-sm text-gray-600 mb-3">{renderHtmlContent(campaign.description)}</div>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
                     <CalendarIcon className="w-4 h-4" />

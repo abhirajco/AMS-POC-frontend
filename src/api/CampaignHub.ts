@@ -7,6 +7,42 @@ const cookieHeaders = () => ({
   "X-CSRFToken": getCsrfToken(),
 });
 
+// Django REST Framework returns validation errors as a flat string
+// (message/error/detail) OR as a field-keyed map like
+// { title: ["This field may not be blank."], assigned_team: ["..."] }.
+// Flatten whatever shape we got into a single human-readable message so the
+// toast shows the real reason instead of a generic "bad request".
+const extractApiError = (data: any, fallback: string): string => {
+  if (!data) return fallback;
+  if (typeof data === "string") return data;
+
+  // Shape: { errors: [{ field, message }, ...] }
+  if (Array.isArray(data.errors)) {
+    const parts = data.errors
+      .map((e: any) =>
+        e?.field && e.field !== "non_field_errors"
+          ? `${e.field}: ${e.message ?? ""}`.trim()
+          : e?.message ?? String(e)
+      )
+      .filter(Boolean);
+    if (parts.length) return parts.join(" | ");
+  }
+
+  if (typeof data.message === "string") return data.message;
+  if (typeof data.error === "string") return data.error;
+  if (typeof data.detail === "string") return data.detail;
+
+  // Shape: { field: ["msg"], ... } (plain DRF serializer errors)
+  const parts: string[] = [];
+  for (const [field, value] of Object.entries(data)) {
+    if (field === "errors") continue;
+    const text = Array.isArray(value) ? value.join(", ") : String(value);
+    parts.push(field === "non_field_errors" ? text : `${field}: ${text}`);
+  }
+
+  return parts.length ? parts.join(" | ") : fallback;
+};
+
 
 export const getAllCampaign = async () => {
   try {
@@ -101,12 +137,15 @@ export const createCampaign = async (campaignData: any) => {
     }
 
     if (response.status === 403) {
-      toast.error(data?.message || data?.error || data?.detail || "Access forbidden");
-      throw new Error(data?.message || data?.error || data?.detail || "Access forbidden");
+      const msg = extractApiError(data, "Access forbidden");
+      toast.error(msg);
+      throw new Error(msg);
     }
 
     if (!response.ok) {
-      throw new Error(data?.message || data?.error || data?.detail || "Failed to create campaign");
+      const msg = extractApiError(data, "Failed to create campaign");
+      toast.error(msg);
+      throw new Error(msg);
     }
 
     return data;
@@ -291,17 +330,9 @@ export const updateCampaign = async (campaignId: string, updatedData: any) => {
     }
 
     if (response.status === 400) {
-      toast.error(
-        data?.message ||
-          data?.detail ||
-          "Invalid campaign data."
-      );
-
-      throw new Error(
-        data?.message ||
-          data?.detail ||
-          "Bad request."
-      );
+      const msg = extractApiError(data, "Invalid campaign data.");
+      toast.error(msg);
+      throw new Error(msg);
     }
 
     if (response.status === 404) {

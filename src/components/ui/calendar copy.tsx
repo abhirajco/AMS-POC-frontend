@@ -68,6 +68,9 @@ export interface CalendarEvent {
   endDate?: string;
   startDate?:string;
 
+  /** Related campaign id (events only). */
+  campaign?: string;
+
   eventDate: string;
   time: string;
   location: string;
@@ -815,6 +818,7 @@ const handleCreateClick = (date: string) => {
       />
           <EventDialog
             open={isModalOpen}
+            mode={isCreateMode ? "create" : "update"}
             history={history}
             form={form}
             teamOptions={TEAM_OPTIONS}

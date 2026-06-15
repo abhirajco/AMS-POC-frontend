@@ -43,12 +43,13 @@ import HeaderSection from "@/components/common/HeaderSection"
 import { Button } from "../components/ui/button";
 import { Plus, Calendar as CalendarIcon, Search, List, ArrowLeft, ArrowRight, Star } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useCampaign } from "@/store/useCampaign";
 import { Card, CardContent } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Input } from "../components/ui/input";
 import AllCampaign from "@/components/ui/CampaingnHub/AllCampaign";
-import CalendarApp from "@/components/ui/CampaingnHub/CalenderView";
+import CalendarApp, { campaignToCalendarItem } from "@/components/ui/CampaingnHub/CalenderView";
 import KanBanView from "@/components/ui/KanBanView";
 import KanBanCard from "@/components/ui/KanBanCard";
 import { createCampaign, updateCampaign, deleteCampaign } from "@/api/CampaignHub";
@@ -131,27 +132,61 @@ const mapCampaignToForm = (c: any): Partial<CalendarEvent> => ({
   effortCompleted: "",
 });
 
+// ── Allowed backend enums (must match the API serializer) ─────────────────────
+// priority: low | medium | high
+// status:   in_progress | upcoming | planning | completed
+const CE_TO_PRIORITY: Record<string, string> = {
+  Low: "low",
+  Medium: "medium",
+  High: "high",
+};
+const CE_TO_STATUS: Record<string, string> = {
+  "In Progress": "in_progress",
+  Upcoming: "upcoming",
+  Planning: "planning",
+  Completed: "completed",
+};
+const CE_TO_TYPE: Record<string, string> = {
+  Campaign: "campaign",
+  Workshop: "workshop",
+  Meeting: "meeting",
+  Webinar: "webinar",
+  "Content Release": "content_release",
+};
+
+// Only forward valid UUIDs to the backend — the mock team picker uses numeric
+// ids which the API rejects (assigned_team expects user UUIDs).
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // ── EventDialog form → campaign API payload ───────────────────────────────────
-const buildCampaignPayload = (f: Partial<CalendarEvent>) => ({
-  title: f.title ?? "",
-  start_date: f.date ?? f.eventDate ?? todayISO(),
-  description: f.description ?? "",
-  campaign_type: f.type ? f.type.toLowerCase() : "",
-  priority: f.priority ? f.priority.toLowerCase() : "medium",
-  status:
-    f.status === "In Progress"
-      ? "in_progress"
-      : f.status === "Follow Up"
-        ? "follow_up"
-        : f.status
-          ? f.status.toLowerCase()
-          : "planning",
-  location: f.location ?? "",
-  tags: "",
-  end_date: f.endDate || f.date || todayISO(),
-  max_hierarchy_level: 2,
-  assigned_team: (f.assignedTeam ?? []).map((m) => String(m.id)),
-});
+const buildCampaignPayload = (f: Partial<CalendarEvent>) => {
+  const assignedTeam = (f.assignedTeam ?? [])
+    .map((m) => String(m.id))
+    .filter((id) => UUID_RE.test(id));
+
+  const payload: Record<string, any> = {
+    title: (f.title ?? "").trim(),
+    start_date: f.date || f.eventDate || todayISO(),
+    description: f.description ?? "",
+    campaign_type: f.type ? CE_TO_TYPE[f.type] ?? "" : "",
+    priority: (f.priority && CE_TO_PRIORITY[f.priority]) || "medium",
+    status: (f.status && CE_TO_STATUS[f.status]) || "planning",
+    location: f.location ?? "",
+    tags: "",
+    end_date: f.endDate || f.date || f.eventDate || todayISO(),
+    max_hierarchy_level: 2,
+  };
+
+  // assigned_team is optional, but the backend rejects an empty list
+  // ("List should have at least 1 item"). Omit it entirely when no valid
+  // member UUIDs are selected so the server applies its default.
+  if (assignedTeam.length > 0) {
+    payload.assigned_team = assignedTeam;
+  }
+
+  return payload;
+};
 
 const campaignColumns = [
   { key: "planning", title: "Planning" },
@@ -177,6 +212,12 @@ const CampaignHubPage = () => {
   const calendarRef = useRef<FullCalendar>(null);
   const [currentLabel, setCurrentLabel] = useState("");
 
+  const navigate = useNavigate();
+  const { id } = useParams();
+  // Tracks the campaign id the route has already opened, so a campaigns refresh
+  // (filter / save) doesn't re-trigger the detail dialog.
+  const openedIdRef = useRef<string | null>(null);
+
   const campaigns = useCampaign((s) => s.campaigns);
   const fetchCampaigns = useCampaign((s) => s.fetchCampaigns);
   const filterCampaigns = useCampaign((s) => s.filterCampaigns);
@@ -185,6 +226,33 @@ const CampaignHubPage = () => {
   useEffect(() => {
     fetchCampaigns();
   }, [fetchCampaigns]);
+
+  // Close the dialog and, when on a /campaign/:id route, return to the hub list.
+  const closeDialog = () => {
+    setDialogOpen(false);
+    if (id) navigate("/campaign-hub");
+  };
+
+  // Open the detail dialog from the URL (click-through and deep links both land
+  // on /campaign/:id). Waits for the campaigns to load before resolving the id.
+  useEffect(() => {
+    const list = Array.isArray(campaigns) ? campaigns : [];
+    if (id) {
+      if (openedIdRef.current === id) return;
+      const campaign = list.find(
+        (c: any) => String(c.campaign_id) === String(id)
+      );
+      if (campaign) {
+        openedIdRef.current = id;
+        openCampaignDetail(campaign);
+      }
+      return;
+    }
+    // No id → ensure any route-opened detail dialog is closed (e.g. browser back).
+    openedIdRef.current = null;
+    if (!isCreateMode) setDialogOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, campaigns, isCreateMode]);
 
 
 const handlePrev = () => {
@@ -239,18 +307,20 @@ useEffect(() => {
     }
   };
 
-  // Calendar emits a FullCalendar event id (the campaign_id) — resolve it.
-  const openCampaignDetailById = (campaignId: string) => {
-    const campaign = campaigns.find(
-      (c: any) => String(c.campaign_id) === String(campaignId)
-    );
-    if (campaign) openCampaignDetail(campaign);
-  };
+  // Clicking a campaign (list / kanban / calendar) navigates to its detail
+  // route; the effect above resolves the id and opens the dialog.
+  const goToCampaign = (campaignId: string) =>
+    navigate(`/campaign/${campaignId}`);
 
   // ── Save: create or update depending on the dialog mode ─────────────────────
   const handleDialogSave = async () => {
     const { toast } = await import("sonner");
     const payload = buildCampaignPayload(dialogForm);
+
+    if (!payload.title) {
+      toast.error("Please enter a campaign title.");
+      return;
+    }
 
     try {
       if (isCreateMode) {
@@ -261,23 +331,23 @@ useEffect(() => {
         await updateCampaign(selectedCampaignId, payload);
       }
       await fetchCampaigns();
-      setDialogOpen(false);
-    } catch (err: any) {
-      toast.error(err?.message || "Something went wrong");
+      closeDialog();
+    } catch {
+      // Validation/server errors are already surfaced by the API layer.
     }
   };
 
   // ── Delete the currently opened campaign ────────────────────────────────────
   const handleDialogDelete = async () => {
     if (isCreateMode || !selectedCampaignId) {
-      setDialogOpen(false);
+      closeDialog();
       return;
     }
     try {
       // deleteCampaign already toasts success/error.
       await deleteCampaign(selectedCampaignId);
       await fetchCampaigns();
-      setDialogOpen(false);
+      closeDialog();
     } catch {
       // Errors are surfaced by the API layer.
     }
@@ -294,9 +364,9 @@ useEffect(() => {
       await createCampaign(payload);
       toast.success("Campaign duplicated successfully");
       await fetchCampaigns();
-      setDialogOpen(false);
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to duplicate campaign");
+      closeDialog();
+    } catch {
+      // createCampaign already surfaces the server error via toast.
     }
   };
 
@@ -524,7 +594,9 @@ useEffect(() => {
           >
             <CalendarApp
               calendarRef={calendarRef}
-              onEventClick={openCampaignDetailById}
+              items={campaigns}
+              mapItem={campaignToCalendarItem}
+              onEventClick={goToCampaign}
               onCreateClick={openCreateCampaign}
             />
           </div>
@@ -546,20 +618,24 @@ useEffect(() => {
                 endDate={c.end_date}
                 location={c.location}
                 taskCount={c.task_count}
-                onClick={() => openCampaignDetail(c)}
+                onClick={() => goToCampaign(c.campaign_id)}
               />
             )}
           />
         ) : (
-          <AllCampaign campaigns={campaigns} onCampaignClick={openCampaignDetail} />
+          <AllCampaign
+            campaigns={campaigns}
+            onCampaignClick={(c: any) => goToCampaign(c.campaign_id)}
+          />
         )}
       </div>
       <EventDialog
         open={dialogOpen}
+        mode={isCreateMode ? "create" : "update"}
         history={history}
         form={dialogForm}
         teamOptions={TEAM_OPTIONS}
-        onClose={() => setDialogOpen(false)}
+        onClose={closeDialog}
         onSave={handleDialogSave}
         onDelete={handleDialogDelete}
         onDuplicate={handleDialogDuplicate}

@@ -7,17 +7,25 @@ import { Timeline, TimelineItem, TimelineSeparator, TimelineDot, TimelineConnect
 import { useState } from "react";
 import { CalendarEvent, Milestone } from "../ui/calendar copy";
 import { EditableField } from "./InlineEditableField";
-import { EditableAssignedTeam, TeamMember } from "./EditableAssignedTeams";
+import { TeamMember } from "./EditableAssignedTeams";
 import RichTextEditor from "../ui/CommentSection copy";
 import { RelatedItems } from "./RelatedItems";
 import { HistoryTab } from "./EventHistoryTwo";
 import { AttachmentTab, Attachment } from "../ui/Attachment";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 type ActivePage = "Page1" | "Page2" | "Page3";
 
 interface EventDialogProps {
   history: any[];
   open: boolean;
+  /** "create" shows a single Create button; "update" shows Save / Delete / Duplicate. */
+  mode: "create" | "update";
+  /** Which hub this dialog serves — drives the title / button wording. */
+  entity?: "campaign" | "event" | "planner";
+  /** Related-campaign options (events only) — { id sent to backend, title shown }. */
+  campaignOptions?: { id: string; title: string }[];
   form: Partial<CalendarEvent>;
   teamOptions: TeamMember[];
   onClose: () => void;
@@ -132,17 +140,6 @@ const autocompleteSx = {
   "& .MuiAutocomplete-popupIndicator": { color: "#605e5c" },
 };
 
-const textFieldSx = {
-  minWidth: 220,
-  "& .MuiInputBase-root": { height: 32, fontSize: "14px" },
-  "& .MuiOutlinedInput-root": {
-    backgroundColor: "#fff",
-    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#d2d0ce" },
-    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#d2d0ce" },
-    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#0078d4" },
-  },
-};
-
 const sectionBoxSx = {
   borderLeft: "6px solid #1a2c47",
   borderRadius: "5px",
@@ -157,6 +154,9 @@ const sectionBoxSx = {
 export const EventDialog = ({
   history,
   open,
+  mode,
+  entity = "campaign",
+  campaignOptions = [],
   form,
   teamOptions,
   onClose,
@@ -165,6 +165,12 @@ export const EventDialog = ({
   onDuplicate,
   onFormChange,
 }: EventDialogProps) => {
+  const isCreate = mode === "create";
+  const entityLabel =
+    entity === "event" ? "Event" : entity === "planner" ? "Task" : "Campaign";
+  // Show the campaign picker when creating an event (related campaign) or a task
+  // (the campaign the task belongs to — required by the backend).
+  const showCampaignPicker = (entity === "event" || entity === "planner") && isCreate;
   const [activePage, setActivePage] = useState<ActivePage>("Page1");
 
   const set = (patch: Partial<CalendarEvent>) =>
@@ -184,6 +190,9 @@ export const EventDialog = ({
       open={open}
       onClose={onClose}
       fullWidth
+      // Let the Radix-based Select popover (rendered in a body portal) keep
+      // focus without MUI's modal focus-trap snapping it back.
+      disableEnforceFocus
       slotProps={{
         paper: {
           sx: {
@@ -226,7 +235,7 @@ export const EventDialog = ({
         </IconButton>
 
         <Box sx={{ fontSize: "1.5rem", fontWeight: 700, color: "#1F2937", pb: 2 }}>
-          Campaign
+          {isCreate ? `Create ${entityLabel}` : entityLabel}
         </Box>
 
         <Box
@@ -236,12 +245,11 @@ export const EventDialog = ({
             // "& .MuiTypography-root": { fontSize: "1.5rem !important", fontWeight: "700 !important", color: "#1F2937" },
           }}
         >
-          <EditableField
-            fontSize="1.5rem"
-            inputHeight={48}
+          <Input
             value={form.title ?? ""}
-            placeholder="Enter campaign title"
-            onSave={(val) => set({ title: val })}
+            placeholder="Enter title"
+            onChange={(e) => set({ title: e.target.value })}
+            className="text-2xl font-bold border-gray-300 h-12"
           />
         </Box>
 
@@ -249,11 +257,49 @@ export const EventDialog = ({
           <Typography sx={{ display: "flex", alignItems: "center", fontWeight: 700, paddingRight: 4 }}>
             Assigned Team
           </Typography>
-          <EditableAssignedTeam
-            value={form.assignedTeam ?? []}
-            options={teamOptions}
-            onSave={(val) => set({ assignedTeam: val })}
-          />
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+            {(form.assignedTeam ?? []).map((m) => (
+              <Chip
+                key={m.id}
+                label={m.name}
+                size="small"
+                onDelete={() =>
+                  set({
+                    assignedTeam: (form.assignedTeam ?? []).filter((x) => x.id !== m.id),
+                  })
+                }
+                sx={{ borderRadius: "16px", backgroundColor: "#EEF2FF", fontWeight: 500, height: 32 }}
+              />
+            ))}
+            <Select
+              value=""
+              onValueChange={(val) => {
+                const member = teamOptions.find((o) => String(o.id) === val);
+                if (member && !(form.assignedTeam ?? []).some((x) => x.id === member.id)) {
+                  set({ assignedTeam: [...(form.assignedTeam ?? []), member] });
+                }
+              }}
+            >
+              <SelectTrigger className="rounded-md border-gray-300 text-sm w-[200px]">
+                <SelectValue placeholder="Add team member" />
+              </SelectTrigger>
+              <SelectContent className="z-[1400]">
+                {teamOptions.filter(
+                  (o) => !(form.assignedTeam ?? []).some((x) => x.id === o.id)
+                ).length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-gray-500">No members</div>
+                ) : (
+                  teamOptions
+                    .filter((o) => !(form.assignedTeam ?? []).some((x) => x.id === o.id))
+                    .map((o) => (
+                      <SelectItem key={o.id} value={String(o.id)}>
+                        {o.name}
+                      </SelectItem>
+                    ))
+                )}
+              </SelectContent>
+            </Select>
+          </Box>
         </Box>
 
         <Box
@@ -350,7 +396,16 @@ export const EventDialog = ({
                           {label}:
                         </Typography>
                         <Box sx={{ display: "flex", ml: 2 }}>
-                          <EditableField fontSize="14px" value={value} onSave={onSave} type={type} />
+                          {label === "Location" ? (
+                            <Input
+                              value={value}
+                              placeholder="Location"
+                              onChange={(e) => onSave(e.target.value)}
+                              className="border-gray-300 text-sm h-8 w-full"
+                            />
+                          ) : (
+                            <EditableField fontSize="14px" value={value} onSave={onSave} type={type} />
+                          )}
                           {label === "Due" && <Typography color="text.secondary">days</Typography>}
                         </Box>
                       </Box>
@@ -519,44 +574,95 @@ export const EventDialog = ({
                     <Box sx={{ display: "flex", flexDirection: "column", pl: 1, pb: 1 }}>
                       <h1>Planning</h1>
 
+                      {/* Related Campaign — events only, while creating. Shows the
+                          campaign title but stores its id in the form. */}
+                      {showCampaignPicker && (
+                        <Box sx={{ mb: 1 }}>
+                          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
+                            {entity === "planner" ? "Campaign" : "Related Campaign"}
+                          </Typography>
+                          <Select
+                            value={form.campaign ?? ""}
+                            onValueChange={(val) => set({ campaign: val })}
+                          >
+                            <SelectTrigger className="rounded-md border-gray-300 text-sm w-full">
+                              <SelectValue placeholder="Select campaign" />
+                            </SelectTrigger>
+                            {/* z-index must beat the MUI Dialog (z-1300) so the
+                                dropdown renders above it, not behind. */}
+                            <SelectContent className="z-[1400]">
+                              {campaignOptions.length === 0 ? (
+                                <div className="px-2 py-1.5 text-sm text-gray-500">
+                                  No campaigns available
+                                </div>
+                              ) : (
+                                campaignOptions.map((c) => (
+                                  <SelectItem key={c.id} value={c.id}>
+                                    {c.title}
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </Box>
+                      )}
+
                       {[
                         {
                           label: "Priority", render: () => (
-                            <Autocomplete
-                              disableClearable forcePopupIcon={false}
-                              size="small" options={priorityOptions}
-                              getOptionLabel={(o) => o.label}
-                              value={priorityOptions.find((o) => o.label === form.priority) ?? undefined}
-                              onChange={(_, v) => set({ priority: v?.label })}
-                              sx={autocompleteSx}
-                              renderInput={(params) => <TextField {...params} placeholder="Select Priority" />}
-                            />
+                            <Select
+                              value={form.priority ?? ""}
+                              onValueChange={(v) => set({ priority: v as CalendarEvent["priority"] })}
+                            >
+                              <SelectTrigger className="rounded-md border-gray-300 text-sm w-full">
+                                <SelectValue placeholder="Select Priority" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1400]">
+                                {priorityOptions.map((o) => (
+                                  <SelectItem key={o.label} value={o.label}>
+                                    {o.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           )
                         },
                         {
                           label: "Status", render: () => (
-                            <Autocomplete
-                              disableClearable forcePopupIcon={false}
-                              size="small" options={statusOptions}
-                              getOptionLabel={(o) => o.label}
-                              value={statusOptions.find((o) => o.value === form.status) ?? undefined}
-                              onChange={(_, v) => set({ status: v?.value })}
-                              sx={autocompleteSx}
-                              renderInput={(params) => <TextField {...params} placeholder="Select Status" />}
-                            />
+                            <Select
+                              value={form.status ?? ""}
+                              onValueChange={(v) => set({ status: v as CalendarEvent["status"] })}
+                            >
+                              <SelectTrigger className="rounded-md border-gray-300 text-sm w-full">
+                                <SelectValue placeholder="Select Status" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1400]">
+                                {statusOptions.map((o) => (
+                                  <SelectItem key={o.value} value={o.value}>
+                                    {o.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           )
                         },
                         {
                           label: "Type", render: () => (
-                            <Autocomplete
-                              disableClearable forcePopupIcon={false}
-                              size="small" options={typeOptions}
-                              getOptionLabel={(o) => o.label}
-                              value={typeOptions.find((o) => o.value === form.type) ?? undefined}
-                              onChange={(_, v) => set({ type: v?.value as CalendarEvent["type"] })}
-                              sx={autocompleteSx}
-                              renderInput={(params) => <TextField {...params} placeholder="Select Type" />}
-                            />
+                            <Select
+                              value={form.type ?? ""}
+                              onValueChange={(v) => set({ type: v as CalendarEvent["type"] })}
+                            >
+                              <SelectTrigger className="rounded-md border-gray-300 text-sm w-full">
+                                <SelectValue placeholder="Select Type" />
+                              </SelectTrigger>
+                              <SelectContent className="z-[1400]">
+                                {typeOptions.map((o) => (
+                                  <SelectItem key={o.value} value={o.value}>
+                                    {o.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           )
                         },
                       ].map(({ label, render }) => (
@@ -581,11 +687,10 @@ export const EventDialog = ({
                           <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
                             {label}
                           </Typography>
-                          <TextField
-                            size="small" variant="outlined" fullWidth
+                          <Input
                             value={form[key] ?? ""}
                             onChange={(e) => set({ [key]: e.target.value })}
-                            sx={textFieldSx}
+                            className="rounded-md border-gray-300 text-sm w-full"
                           />
                         </Box>
                       ))}
@@ -630,15 +735,25 @@ export const EventDialog = ({
 
       {/* ── Actions ───────────────────────────────────── */}
       <DialogActions sx={{ px: 3, pb: 2, gap: 1, flexShrink: 0 }}>
-        <Button startIcon={<ContentCopyIcon />} variant="outlined" size="small" onClick={onDuplicate} sx={{ borderRadius: "8px", textTransform: "none" }}>
-          Duplicate
-        </Button>
-        <Button startIcon={<SaveIcon />} variant="contained" size="small" onClick={onSave} sx={{ borderRadius: "8px", textTransform: "none" }}>
-          Save
-        </Button>
-        <Button startIcon={<DeleteIcon />} variant="outlined" size="small" color="error" onClick={onDelete} sx={{ borderRadius: "8px", textTransform: "none" }}>
-          Delete
-        </Button>
+        {isCreate ? (
+          // Create mode → single Create Campaign button (createCampaign API).
+          <Button startIcon={<SaveIcon />} variant="contained" size="small" onClick={onSave} sx={{ borderRadius: "8px", textTransform: "none" }}>
+            Create {entityLabel}
+          </Button>
+        ) : (
+          // Update mode → Save (updateCampaign), Delete (deleteCampaign), Duplicate (createCampaign).
+          <>
+            <Button startIcon={<ContentCopyIcon />} variant="outlined" size="small" onClick={onDuplicate} sx={{ borderRadius: "8px", textTransform: "none" }}>
+              Duplicate
+            </Button>
+            <Button startIcon={<SaveIcon />} variant="contained" size="small" onClick={onSave} sx={{ borderRadius: "8px", textTransform: "none" }}>
+              Save
+            </Button>
+            <Button startIcon={<DeleteIcon />} variant="outlined" size="small" color="error" onClick={onDelete} sx={{ borderRadius: "8px", textTransform: "none" }}>
+              Delete
+            </Button>
+          </>
+        )}
       </DialogActions>
     </Dialog>
   );

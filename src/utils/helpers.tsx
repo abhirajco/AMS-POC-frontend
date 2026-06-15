@@ -156,6 +156,24 @@ export const getCEStatusBadge = (status: string) => {
   }
 };
 
+// Task status badge: maps the backend enum (to_do | in_progress | completed |
+// blocked) to a human label with a colour that matches the rest of the app.
+export const getTaskStatusBadge = (status: string) => {
+  const normalized = normalizeStatus(status).replace(/-/g, "_");
+  switch (normalized) {
+    case 'to_do':
+      return <Badge className="text-xs" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>To Do</Badge>;
+    case 'in_progress':
+      return <Badge className="text-xs" style={{ backgroundColor: '#dbeafe', color: '#2563eb' }}>In Progress</Badge>;
+    case 'completed':
+      return <Badge className="text-xs" style={{ backgroundColor: '#dcfce7', color: '#16a34a' }}>Completed</Badge>;
+    case 'blocked':
+      return <Badge className="text-xs" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}>Blocked</Badge>;
+    default:
+      return <Badge variant="outline" className="text-xs capitalize">{status}</Badge>;
+  }
+};
+
 export const getPriorityBadge = (priority: string) => {
   const normalized = (priority || '').toLowerCase();
   switch (normalized) {
