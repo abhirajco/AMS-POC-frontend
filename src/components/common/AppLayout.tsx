@@ -1,6 +1,5 @@
 import { Outlet } from "react-router-dom";
 import SidebarNavigation from "./SidebarNavigation";
-import HeaderSection from "./HeaderSection";
 
 const AppLayout = () => {
   return (

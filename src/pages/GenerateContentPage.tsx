@@ -14,6 +14,157 @@ import VersionSidebar from "@/components/ui/VersionSidebar";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { useLocation } from "react-router-dom";
 import { getCsrfToken } from "@/utils/csrf";
+import * as pdfjsLib from "pdfjs-dist";
+import mammoth from "mammoth";
+
+// REQUIRED for pdfjs
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
+
+export interface ParsedDocument {
+  title: string;
+  description: string;
+  milestones: string[];
+  rawText: string;
+}
+
+/* ──────────────────────────────────────────────
+   PDF Extraction
+────────────────────────────────────────────── */
+
+const extractPdfText = async (
+  file: File,
+): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+
+  const pdf = await pdfjsLib.getDocument({
+    data: arrayBuffer,
+  }).promise;
+
+  let text = "";
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+
+    const content =
+      await page.getTextContent();
+
+    const strings = content.items.map(
+      (item) => {
+        if ("str" in item) {
+          return item.str;
+        }
+
+        return "";
+      },
+    );
+
+    text += strings.join(" ") + "\n";
+  }
+
+  return text;
+};
+
+/* ──────────────────────────────────────────────
+   DOCX Extraction
+────────────────────────────────────────────── */
+
+const extractDocxText = async (
+  file: File,
+): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+
+  const result =
+    await mammoth.extractRawText({
+      arrayBuffer,
+    });
+
+  return result.value;
+};
+
+/* ──────────────────────────────────────────────
+   TXT / MD Extraction
+────────────────────────────────────────────── */
+
+const extractPlainText = async (
+  file: File,
+): Promise<string> => {
+  return await file.text();
+};
+
+/* ──────────────────────────────────────────────
+   Main Extractor
+────────────────────────────────────────────── */
+
+export const extractTextFromFile =
+  async (file: File): Promise<string> => {
+    const extension = file.name
+      .split(".")
+      .pop()
+      ?.toLowerCase();
+
+    switch (extension) {
+      case "pdf":
+        return await extractPdfText(file);
+
+      case "docx":
+        return await extractDocxText(file);
+
+      case "txt":
+      case "md":
+        return await extractPlainText(file);
+
+      default:
+        throw new Error(
+          "Unsupported file format",
+        );
+    }
+  };
+
+/* ──────────────────────────────────────────────
+   Custom Parser
+────────────────────────────────────────────── */
+
+export const parsePlanningDocument = (
+  text: string,
+): ParsedDocument => {
+  const cleaned = text
+    .replace(/\r/g, "")
+    .replace(/\t/g, " ")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
+
+  const lines = cleaned
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  // TITLE
+  const title = lines[0] ?? "";
+
+  // DESCRIPTION
+  const description = lines
+    .slice(1, 6)
+    .join(" ");
+
+  // SIMPLE MILESTONE DETECTION
+  const milestones = lines.filter(
+    (line) =>
+      line.startsWith("-") ||
+      line.startsWith("•") ||
+      /^\d+\./.test(line),
+  );
+
+  return {
+    title,
+    description,
+    milestones,
+    rawText: cleaned,
+  };
+};
+
 const GenerateContentPage = () => {
 
   const [description, setDescription] = useState('');
@@ -22,13 +173,11 @@ const GenerateContentPage = () => {
   const [title, setTitle] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState('');
+  const [, setGeneratedContent] = useState('');
   const [generationPrompt, setGenerationPrompt] = useState('');
   const [contentId, setContentId] = useState("");
-  const [editorContent, setEditorContent] = useState('');
-  const [contents, setContents] = useState<any[]>([]);
-  const [contentBody, setContentBody] = useState("");
-  const [contentTitle, setContentTitle] = useState("");
+  const [, setContentBody] = useState("");
+  const [, setContentTitle] = useState("");
   const [allContent, setAllContent] = useState([]);
   const [selectedTitle, setSelectedTitle] = useState("");
   const [selectedBody, setSelectedBody] = useState("");
@@ -36,13 +185,65 @@ const GenerateContentPage = () => {
   const location = useLocation();
 
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] || null;
-    if (f) {
-      setUploadedFile(f);
-      toast.success('Document attached. Ready to extract.');
-    }
-  };
+  // const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const f = e.target.files?.[0] || null;
+  //   if (f) {
+  //     setUploadedFile(f);
+  //     toast.success('Document attached. Ready to extract.');
+  //   }
+  // };
+
+  
+// const handleFileUpload = async (
+//   e: React.ChangeEvent<HTMLInputElement>,
+// ) => {
+//   const file = e.target.files?.[0];
+
+//   if (!file) return;
+
+//   try {
+//     const rawText =
+//       await extractTextFromFile(file);
+
+//     const parsed =
+//       parsePlanningDocument(rawText);
+
+//     setForm((prev) => ({
+//       ...prev,
+//       title: parsed.title,
+//       description: parsed.description,
+//     }));
+
+//     console.log(parsed);
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };
+
+
+const handleFileUpload = async (
+  e: React.ChangeEvent<HTMLInputElement>,
+) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  try {
+    const rawText =
+      await extractTextFromFile(file);
+
+    const parsed =
+      parsePlanningDocument(rawText);
+
+    setTitle(parsed.title);
+    setDescription(parsed.description);
+
+    console.log(parsed);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 
   const handleSubmitContent = async () => {
     if (!contentId) {
@@ -144,23 +345,6 @@ const GenerateContentPage = () => {
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Something went wrong");
-    }
-  };
-
-  const unlockContent = async (id: string) => {
-    try {
-      await fetch(`http://127.0.0.1:8000/api/content/contents/${id}/lock/`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCsrfToken(),
-        },
-      });
-
-      console.log("Unlocked");
-    } catch (err) {
-      console.error("Unlock failed");
     }
   };
 

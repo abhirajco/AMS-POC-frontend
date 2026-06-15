@@ -3,7 +3,6 @@ import {Box,Typography,IconButton,Menu,MenuItem,TextField,Button,Avatar,Dialog,D
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import SendIcon from "@mui/icons-material/Send";
 import { MentionsInput, Mention } from "react-mentions";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { getCsrfToken } from "@/utils/csrf";

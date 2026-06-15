@@ -6,7 +6,6 @@ import { BASE_URL } from "@/utils/BASE_URL"
 import { Card, CardContent } from "../components/ui/card";
 import CommentSection from "@/components/ui/CommentSection"
 import { toast } from "sonner"
-import VersionSidebar from "@/components/ui/VersionSidebar"
 import { getCsrfToken } from "@/utils/csrf"
 
 const ContentEditorPage = () => {
@@ -19,8 +18,7 @@ const ContentEditorPage = () => {
   const [internalApproval, setInternalApproval] = useState(false);
   const [marketingApproval, setMarketingApproval] = useState(false);
   const [stakeholderApproval, setStakeholderApproval] = useState(false);
-  const [refreshVersionsKey, setRefreshVersionsKey] = useState(0);
-  const [allContent, setAllContent] = useState([]);
+  const [, setRefreshVersionsKey] = useState(0);
 
 
   type HistoryItem = {
@@ -390,7 +388,7 @@ const ContentEditorPage = () => {
 
         {/* RIGHT → Comments */}
         <div className=" w-80 ">
-          <CommentSection id={id} />
+          <CommentSection id={id ?? ""} />
         </div>
       </div>
     </div>

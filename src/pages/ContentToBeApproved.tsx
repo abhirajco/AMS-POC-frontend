@@ -180,8 +180,6 @@ import { BASE_URL } from "@/utils/BASE_URL";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { normalizeStatus } from "@/utils/helpers";
 import { Divider } from "@mui/material";
 import { getStatusBadge } from "@/utils/helpers";
 import { getCsrfToken } from "@/utils/csrf";
@@ -201,7 +199,7 @@ const ContentToBeApproved = () => {
 
   const [inReviewContent, setInReviewContent] = useState<Content[]>([]);
   const [activeFilter, setActiveFilter] = useState<
-    "admin" | "executive" | "internal">("");
+    "" | "admin" | "executive" | "internal">("");
 
   const navigate = useNavigate();
 

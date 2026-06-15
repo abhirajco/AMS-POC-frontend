@@ -1,11 +1,8 @@
-import React from 'react'
 import HeaderSection from "@/components/common/HeaderSection";
 import { useParams } from "react-router-dom";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { useState, useEffect } from "react";
-import { Box, TextField, Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Menu, MenuItem, } from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import ApprovalTextEditor from "@/components/ui/ApprovalTextEditor";
 import CommentSection from "@/components/ui/CommentSection";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,10 +14,6 @@ const PublishPage = () => {
     const { id } = useParams();
     const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
-    const [rejectOpen, setRejectOpen] = useState(false);
-    const [reason, setReason] = useState("");
-    const [comment, setComment] = useState("");
-    const [comments, setComments] = useState([]);
 
     const fetchContent = async () => {
 
@@ -80,8 +73,8 @@ const PublishPage = () => {
             toast.success(successMessage);
 
             return data;
-        } catch (error) {
-            toast.error(error.message || "Something went wrong");
+        } catch (error: any) {
+            toast.error(error?.message || "Something went wrong");
             throw error;
         }
     };
@@ -103,7 +96,7 @@ const PublishPage = () => {
                             <ApprovalTextEditor
                                 contentTitle={title}
                                 contentBody={body}
-                                contentId={id}
+                                contentId={id ?? ""}
                                 onChange={(value) => setBody(value)}
                             />
                             <div className="mt-4 flex justify-between">
@@ -124,7 +117,7 @@ const PublishPage = () => {
 
                 {/* RIGHT → Comments */}
                 <div className=" w-80 ">
-                    <CommentSection id={id} />
+                    <CommentSection id={id ?? ""} />
                 </div>
             </div>
         </>

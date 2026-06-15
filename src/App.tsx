@@ -11,10 +11,9 @@ import AnalyticsPage  from "@/pages/AnalyticsPage";
 import  LoginPage  from "@/pages/LoginPage";
 import LandingPage  from "@/pages/LandingPage";
 import  AMSInfoPage  from "@/pages/AMSInfoPage";
-import { Routes, Route, Navigate, useNavigate, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
 import ContentHubPage from "./pages/ContentHubPage";
 import AppLayout from "./components/common/AppLayout";
-import { createContext,useState } from "react";
 import ExecutiveForm from "./pages/ExecutiveForm";
 //import AdminDashboard from "./pages/ContentToBeApproved";
 import ContentToBeApproved from "./pages/ContentToBeApproved";
@@ -24,6 +23,8 @@ import ContentApprovalPage from "./pages/ContentApprovalPage";
 import AdminContentPublishList from "./pages/AdminContentPublishList";
 import PublishPage from "./pages/PublishPage";
 import CampaignHubPage from "@/pages/CampaignHubPage";
+import InviteUserPage from "@/pages/InviteUser";
+import GlobalSearchPage from "@/pages/GlobalSearchPage";
 const App = ()=>{
 
 
@@ -35,6 +36,9 @@ const App = ()=>{
         <Route path ="/landing" element={<LandingPage/>}/>
         <Route element={<AppLayout/>}>
         <Route path ="/campaign-hub" element = {<CampaignHubPage/>}/>
+          <Route path="/campaign/:id" element={<CampaignHubPage/>}/>
+          <Route path="/event/:id" element={<EventHubPage/>}/>
+          <Route path="/planner/:id" element={<PlannerPage/>}/>
           <Route path = "/approved-content" element ={<AdminContentPublishList/>}/>
           <Route path = "/publish/:id" element ={<PublishPage/>}/>
           <Route path="/review/:id" element={<ContentApprovalPage/>}/> 
@@ -54,6 +58,8 @@ const App = ()=>{
           <Route path="/new-proof-point" element={<NewProofPointPage/>}/>
           <Route path="/asset-managment" element={<AssetsManagementPage/>}/>
           <Route path="/Content-brief-list" element={<AllCreatedBrief/>}/>
+          <Route path="/invite-user" element={<InviteUserPage/>}/>
+          <Route path="/global-search" element={<GlobalSearchPage/>}/>
         </Route>
         
     </Routes>

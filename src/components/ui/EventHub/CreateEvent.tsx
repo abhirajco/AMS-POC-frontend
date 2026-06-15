@@ -11,7 +11,7 @@ import { createEvent } from "@/api/EventHub";
 import { toast } from "sonner";
 import { useEvent } from "@/store/useEvent";
 
-const CreateEventDialog = ({ open, setOpen }: any) => {
+const CreateEventDialog = ({ open, setOpen, defaultDate }: any) => {
     const [loading, setLoading] = useState(false);
 
     const campaigns = useCampaign((s: any) => s.campaigns);
@@ -35,6 +35,17 @@ const CreateEventDialog = ({ open, setOpen }: any) => {
     useEffect(() => {
         fetchCampaigns();
     }, [])
+
+    // Prefill the date range when the dialog is opened from a calendar cell "+".
+    useEffect(() => {
+        if (open && defaultDate) {
+            setForm((prev) => ({
+                ...prev,
+                start_date: defaultDate,
+                end_date: prev.end_date || defaultDate,
+            }));
+        }
+    }, [open, defaultDate])
 
     const handleChange = (key: string, value: any) => {
         setForm((prev) => ({

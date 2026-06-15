@@ -1,5 +1,5 @@
 import amsLogo from "@/assets/images/ams-logo.png";
-import { Search, CheckCircle2, ArrowRight } from "lucide-react";
+import { Search } from "lucide-react";
 import { toast } from "sonner";
 import {Link} from "react-router-dom";
 

@@ -5,11 +5,10 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { BASE_URL } from "@/utils/BASE_URL";
 import { useEffect } from "react";
-import { getCsrfToken, setCsrfToken } from "@/utils/csrf";
-import { Popover, Box, FormControl, InputLabel, Select, MenuItem, Button, Typography, TextField } from "@mui/material";
+import { getCsrfToken } from "@/utils/csrf";
 
 type Props = {
-  allContent: any[];
+  allContent: any;
   onSelect: (contentId: string, versionId?: string,) => void;
   refreshKey: number;
 };
@@ -18,18 +17,6 @@ const VersionSidebar = ({ allContent, onSelect, refreshKey }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [versions, setVersions] = useState<Record<string, any[]>>({});
-
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-
-  // form state
-  const [title, setTitle] = useState("");
-  const [brief, setBrief] = useState("");
-  const [campaignId, setCampaignId] = useState("");
-  const [eventId, setEventId] = useState("");
-  const [executiveId, setExecutiveId] = useState("");
-  const [contentType, setContentType] = useState("");
-  const [tags, setTags] = useState("");
 
   const formatDateTime = (dateString: string) => {
     const normalized =
@@ -44,146 +31,9 @@ const VersionSidebar = ({ allContent, onSelect, refreshKey }: Props) => {
   };
 
   // dropdown data
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
-  const [executives, setExecutives] = useState<any[]>([]);
+  const [, setCampaigns] = useState<any[]>([]);
+  const [, setExecutives] = useState<any[]>([]);
   console.log(allContent)
-
-  // const createNewContent = async () => {
-  //   const token = localStorage.getItem("accessToken");
-
-  //   try {
-  //     const res = await fetch(`${BASE_URL}/content/contents/new/`, {
-  //       method: "POST",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         title,
-  //         brief,
-  //         content_type: contentType,
-  //         campaign_id: campaignId,
-  //         ...(eventId && { event_id: eventId }),
-  //         tags,
-  //         executive_id: executiveId,
-  //       }),
-  //     });
-
-  //     const data = await res.json();
-  //     console.log(data);
-
-  //     if (res.ok) {
-  //       setTitle("");
-  //       setBrief("");
-  //       setCampaignId("");
-  //       setEventId("");
-  //       setExecutiveId("");
-  //       setContentType("");
-  //       setTags("");
-
-  //       handleClose();
-  //     } else {
-  //       console.error("Error:", data);
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
-
-
-  const createNewContent = async () => {
-  try {
-    const response = await fetch(`${BASE_URL}/content/contents/new/`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCsrfToken(),
-      },
-      body: JSON.stringify({
-        title,
-        brief,
-        content_type: contentType,
-        campaign_id: campaignId,
-        ...(eventId && { event_id: eventId }),
-        tags,
-        executive_id: executiveId,
-      }),
-    });
-
-    let data: any = {};
-
-    const contentTypeHeader = response.headers.get("content-type");
-
-    if (contentTypeHeader?.includes("application/json")) {
-      try {
-        data = await response.json();
-      } catch {
-        data = {};
-      }
-    }
-
-    if (response.status === 401) {
-      localStorage.clear();
-      window.location.href = "/login";
-      throw new Error(
-        data?.messages?.[0]?.message ||
-        "Session expired. Please login again."
-      );
-    }
-
-    if (response.status === 403) {
-      throw new Error(
-        data?.detail ||
-        data?.[0]?.message ||
-        "You are not authorized to perform this action."
-      );
-    }
-
-    if (response.status >= 500) {
-      throw new Error("Internal server error. Please try again later.");
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        data?.details ||
-        data?.message ||
-        "Failed to create content."
-      );
-    }
-
-    console.log(data);
-
-    setTitle("");
-    setBrief("");
-    setCampaignId("");
-    setEventId("");
-    setExecutiveId("");
-    setContentType("");
-    setTags("");
-
-    handleClose();
-  } catch (error: any) {
-    if (
-      error instanceof TypeError &&
-      error.message === "Failed to fetch"
-    ) {
-      console.error("Network error. Please check your internet connection.");
-      return;
-    }
-
-    console.error("Error creating content:", error);
-  }
-};
-
-  const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
 
   // const fetchCampaigns = async () => {
   //   const token = localStorage.getItem("accessToken");
@@ -233,59 +83,6 @@ const fetchCampaigns = async () => {
     setCampaigns(data);
   } catch (error) {
     console.error("Error fetching campaigns:", error);
-  }
-};
-
-  // const fetchEvents = async (id: string) => {
-  //   const token = localStorage.getItem("accessToken");
-  //   const res = await fetch(
-  //     `${BASE_URL}/board/campaigns/${id}/events/`,
-  //     { headers: { Authorization: `Bearer ${token}` } }
-  //   );
-  //   const data = await res.json();
-  //   setEvents(data.events || []);
-  // };
-
-  const fetchEvents = async (id: string) => {
-  try {
-    const response = await fetch(
-      `${BASE_URL}/board/campaigns/${id}/events/`,
-      {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCsrfToken(),
-        },
-      }
-    );
-
-    if (response.status === 401) {
-      localStorage.clear();
-      window.location.href = "/login";
-      throw new Error("Session expired. Please login again.");
-    }
-
-    if (response.status === 403) {
-      throw new Error("You are not authorized to view events.");
-    }
-
-    if (response.status >= 500) {
-      throw new Error("Internal server error. Please try again later.");
-    }
-
-    if (!response.ok) {
-      const errorMessage = await response.text();
-      throw new Error(
-        errorMessage ||
-          `Failed to fetch events. Status: ${response.status}`
-      );
-    }
-
-    const data = await response.json();
-    setEvents(data.events || []);
-  } catch (error) {
-    console.error("Error fetching events:", error);
   }
 };
 

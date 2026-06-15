@@ -5,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import { useNavigate } from "react-router-dom"
 import { BASE_URL } from "@/utils/BASE_URL";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const SidebarNavigation = () => {
 
-  const [sideBarOpen, setSideBarOpen] = useState(true);
+  const [sideBarOpen] = useState(true);
   const [campaignDropdownOpen, setCampaignDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -149,7 +148,14 @@ const SidebarNavigation = () => {
           </div>
         </div>
 
-        <Link to="/proof-points" className="flex items-center px-3 py-3 sm:py-2 text-white cursor-pointer hover:bg-[#152339] transition-colors min-h-[48px]">
+        <div
+          onClick={() =>
+            import("sonner").then(({ toast }) =>
+              toast("Proof Points is coming soon.")
+            )
+          }
+          className="flex items-center px-3 py-3 sm:py-2 text-white cursor-pointer hover:bg-[#152339] transition-colors min-h-[48px]"
+        >
           <div className="w-6 h-6 mr-3 flex-shrink-0">
             <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
               <path d={svgPaths.p1ee106c0} stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -157,27 +163,48 @@ const SidebarNavigation = () => {
           </div>
           {sideBarOpen && (<span className="font-semibold text-[14px] sm:text-[16px] truncate">Proof Points</span>)}
 
-        </Link>
+        </div>
 
-        <Link to="/leads-prospects" className="flex items-center px-3 py-3 sm:py-2 text-white cursor-pointer hover:bg-[#152339] transition-colors min-h-[48px]">
+        <div
+          onClick={() =>
+            import("sonner").then(({ toast }) =>
+              toast("Leads & Prospects is coming soon.")
+            )
+          }
+          className="flex items-center px-3 py-3 sm:py-2 text-white cursor-pointer hover:bg-[#152339] transition-colors min-h-[48px]"
+        >
           <div className="w-6 h-6 mr-3 flex-shrink-0">
             <svg viewBox="0 0 26 26" fill="none" className="w-6 h-6">
               <path d={svgPaths.p2382f940} fill="white" />
             </svg>
           </div>
           {sideBarOpen && (<span className="font-semibold text-[14px] sm:text-[16px] truncate">Leads & Prospects</span>)}
-        </Link>
+        </div>
 
-        <Link to="/asset-managment" className="flex items-center px-3 py-3 sm:py-2 text-white cursor-pointer hover:bg-[#152339] transition-colors min-h-[48px]">
+        <div
+          onClick={() =>
+            import("sonner").then(({ toast }) =>
+              toast("Assets Management is coming soon.")
+            )
+          }
+          className="flex items-center px-3 py-3 sm:py-2 text-white cursor-pointer hover:bg-[#152339] transition-colors min-h-[48px]"
+        >
           <div className="w-6 h-6 mr-3 flex-shrink-0">
             <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
               <path d={svgPaths.p15652a00} stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           {sideBarOpen && (<span className="font-semibold text-[14px] sm:text-[16px] truncate">Assets Management</span>)}
-        </Link>
+        </div>
 
-        <Link to="/analytics" className="flex items-center px-3 py-2 text-white hover:bg-[#152339] transition min-h-[48px]">
+        <div
+          onClick={() =>
+            import("sonner").then(({ toast }) =>
+              toast("Analytics is coming soon.")
+            )
+          }
+          className="flex items-center px-3 py-2 text-white cursor-pointer hover:bg-[#152339] transition min-h-[48px]"
+        >
           <div className="w-6 h-6 mr-3 flex-shrink-0">
             <svg viewBox="0 0 16 16" fill="none" className="w-6 h-6">
               <path d={svgPaths.p33ade3f1} fill="white" />
@@ -186,19 +213,15 @@ const SidebarNavigation = () => {
           {sideBarOpen && (<span className="font-semibold text-[14px] sm:text-[16px] truncate">
             Analytics
           </span>)}
-        </Link>
+        </div>
       </div>
 
       {/* SUPPORT + SETTINGS (FIXED BELOW NAV) */}
       <div className="border-y border-gray-600 p-2">
 
-        <div
+        <Link
+          to="/invite-user"
           className="flex items-center px-3 py-2 text-white cursor-pointer hover:bg-[#152339]"
-          onClick={() =>
-            import("sonner").then(({ toast }) =>
-              toast("Support functionality is coming soon.")
-            )
-          }
         >
           <div className="w-6 h-6 mr-3">
             <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
@@ -212,10 +235,10 @@ const SidebarNavigation = () => {
             </svg>
           </div>
           {sideBarOpen && (<span className="font-semibold text-[14px] sm:text-[16px]">
-            Support
+            Invite User
           </span>)}
 
-        </div>
+        </Link>
 
         <div
           className="flex items-center px-3 py-2 text-white cursor-pointer hover:bg-[#152339]"

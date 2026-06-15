@@ -706,31 +706,13 @@
 //     </>
 //   );
 // }
-import { Chip, Avatar } from "@mui/material";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DeleteIcon from "@mui/icons-material/Delete";
-import AddIcon from "@mui/icons-material/Add";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from "@mui/material";
 import { EventClickArg, EventDropArg} from "@fullcalendar/core";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
-import { EventApi } from "@fullcalendar/core";
-import { Typography } from "@mui/material";
-import { Box } from "@mui/material";
-//import { EditableField } from "./InlineEditableField";
-import SaveIcon from "@mui/icons-material/Save";
-import CreateCampaignDialog from "@/components/ui/CampaingnHub/CreateCampaign";
-import { useCampaign } from "@/store/useCampaign";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -767,216 +749,143 @@ export interface CalendarEvent {
   relatedTaskId?: number;
 }
 
-// ─── Backend Campaign → CalendarEvent mapper ──────────────────────────────────
+// ─── Reusable calendar item ───────────────────────────────────────────────────
 
 /**
- * Maps a raw backend campaign object to the CalendarEvent shape used by the UI.
- * Fields that don't exist in the backend are given sensible defaults.
+ * Normalised shape the calendar understands. Any data source (campaigns,
+ * events, tasks…) is reduced to this via a `mapItem` prop, so the calendar
+ * itself stays data-source agnostic.
  */
-const mapCampaignToCalendarEvent = (campaign: any): CalendarEvent => {
-  // Normalise status: backend uses snake_case / lowercase
-  const statusMap: Record<string, CalendarEvent["status"]> = {
-    upcoming: "Upcoming",
-    in_progress: "In Progress",
-    completed: "Completed",
-    planning: "Planning",
-    follow_up: "Follow Up",
-    "follow up": "Follow Up",
-  };
+export interface CalendarItem {
+  id: string;
+  title: string;
+  /** Start date — "YYYY-MM-DD". */
+  start: string;
+  /** End date — "YYYY-MM-DD" (optional). */
+  end?: string;
+  /** Backend status (any case); colours the event when it maps to a known label. */
+  status?: string;
+  priority?: string;
+  type?: string;
+  location?: string;
+  description?: string;
+}
 
-  // Normalise priority
-  const priorityMap: Record<string, CalendarEvent["priority"]> = {
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-  };
-
-  // Normalise campaign_type → type
-  const typeMap: Record<string, CalendarEvent["type"]> = {
-    campaign: "Campaign",
-    workshop: "Workshop",
-    meeting: "Meeting",
-    webinar: "Webinar",
-    "content release": "Content Release",
-    content_release: "Content Release",
-  };
-
-  const rawStatus = (campaign.status ?? "").toLowerCase();
-  const rawPriority = (campaign.priority ?? "").toLowerCase();
-  const rawType = (campaign.campaign_type ?? "").toLowerCase();
-
-  // Build DD-MM-YYYY display string from "YYYY-MM-DD"
-  const toDisplayDate = (iso: string): string => {
-    if (!iso) return "";
-    const parts = iso.split("-"); // ["2026","05","21"]
-    if (parts.length !== 3) return iso;
-    return `${parts[2]}-${parts[1]}-${parts[0]}`; // "21-05-2026"
-  };
-
-  return {
-    // Use campaign_id hashed to a number as id (FullCalendar uses string ids anyway)
-    id: campaign.campaign_id,
-    title: campaign.title ?? "Untitled",
-    type: typeMap[rawType] ?? "Campaign",
-    status: statusMap[rawStatus] ?? "Upcoming",
-    priority: priorityMap[rawPriority] ?? "Medium",
-    date: campaign.start_date ?? "",
-    endDate: campaign.end_date ?? undefined,
-    eventDate: toDisplayDate(campaign.start_date ?? ""),
-    time: "",          // Not in backend — left empty
-    location: campaign.location ?? "",
-    dueTime: campaign.end_date ?? "",
-    description: campaign.description ?? "",
-    assignedTeam: campaign.created_by_name
-      ? [
-          {
-            id: 1,
-            name: campaign.created_by_name,
-            role: "Creator",
-            initials: campaign.created_by_name
-              .split(" ")
-              .map((w: string) => w[0])
-              .join("")
-              .toUpperCase()
-              .slice(0, 2),
-          },
-        ]
-      : [],
-    milestones: [],    // Not returned from list endpoint — leave empty
-    relatedTaskId: undefined,
-  };
+// Backend snake_case / lowercase status → the label keys used for colouring.
+const STATUS_LABEL: Record<string, string> = {
+  upcoming: "Upcoming",
+  in_progress: "In Progress",
+  completed: "Completed",
+  planning: "Planning",
+  follow_up: "Follow Up",
+  "follow up": "Follow Up",
 };
+
+const toStatusLabel = (status?: string): string =>
+  STATUS_LABEL[(status ?? "").toLowerCase()] ?? status ?? "";
+
+/** Map a backend campaign object → CalendarItem. */
+export const campaignToCalendarItem = (c: any): CalendarItem => ({
+  id: c.campaign_id,
+  title: c.title ?? "Untitled",
+  start: c.start_date ?? "",
+  end: c.end_date ?? undefined,
+  status: toStatusLabel(c.status),
+  priority: c.priority,
+  type: c.campaign_type,
+  location: c.location,
+  description: c.description,
+});
+
+/** Map a backend event object → CalendarItem. */
+export const eventToCalendarItem = (e: any): CalendarItem => ({
+  id: e.event_id,
+  title: e.title ?? "Untitled",
+  start: e.start_date ?? "",
+  end: e.end_date ?? undefined,
+  status: toStatusLabel(e.status),
+  priority: e.priority,
+  type: e.event_type,
+  location: e.location,
+  description: e.description,
+});
+
+// Task statuses (to_do / blocked) don't exist in the shared status palette, so
+// map them onto the closest label that the calendar already knows how to colour.
+const TASK_STATUS_LABEL: Record<string, string> = {
+  to_do: "Planning",
+  in_progress: "In Progress",
+  completed: "Completed",
+  blocked: "Follow Up",
+};
+
+/** Map a backend task object → CalendarItem (tasks sit on their due date). */
+export const taskToCalendarItem = (t: any): CalendarItem => ({
+  id: t.task_id,
+  title: t.title ?? "Untitled",
+  start: t.due_date ?? "",
+  end: t.due_date ?? undefined,
+  status: TASK_STATUS_LABEL[(t.status ?? "").toLowerCase()] ?? toStatusLabel(t.status),
+  priority: t.priority,
+  type: t.marketing_type,
+  description: t.description,
+});
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 type Props = {
   calendarRef: React.RefObject<FullCalendar>;
+  /** Raw data array (campaigns, events, …). */
+  items: any[];
+  /** Reduces a raw item to the normalised {@link CalendarItem} shape. */
+  mapItem: (item: any) => CalendarItem;
+  /** Called with the item id when an existing event is clicked. */
+  onEventClick?: (id: string) => void;
+  /** Called with the clicked date (YYYY-MM-DD) when the cell "+" is pressed. */
+  onCreateClick?: (date: string) => void;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const CalendarApp: React.FC<Props> = ({ calendarRef }) => {
-  // ── Zustand ──────────────────────────────────────────────────────────────
-  const campaigns = useCampaign((s: any) => s.campaigns);
-
-  // ── Map backend campaigns → FullCalendar event objects ───────────────────
-  const mapToCalendarEvents = useCallback((data: any[]) => {
-    return (data ?? []).map((campaign) => {
-      const ev = mapCampaignToCalendarEvent(campaign);
-      return {
-        id: String(ev.id),
-        title: ev.title,
-        start: ev.date,
-        end: ev.endDate || undefined,
-        allDay: true,
-        extendedProps: ev,
-      };
-    });
-  }, []);
+const CalendarApp: React.FC<Props> = ({
+  calendarRef,
+  items,
+  mapItem,
+  onEventClick,
+  onCreateClick,
+}) => {
+  // ── Map any backend items → FullCalendar event objects ───────────────────
+  const mapToCalendarEvents = useCallback(
+    (data: any[]) => {
+      return (data ?? []).map((item) => {
+        const it = mapItem(item);
+        return {
+          id: String(it.id),
+          title: it.title,
+          start: it.start,
+          end: it.end || undefined,
+          allDay: true,
+          extendedProps: it,
+        };
+      });
+    },
+    [mapItem]
+  );
 
   // ── Local state ───────────────────────────────────────────────────────────
-  const [events, setEvents] = useState(() => mapToCalendarEvents(campaigns ?? []));
-  const [selectedEvent, setSelectedEvent] = useState<EventApi | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form, setForm] = useState<Partial<CalendarEvent>>({});
-
-  // CreateCampaign dialog
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [defaultDate, setDefaultDate] = useState<string>("");
+  const [events, setEvents] = useState(() => mapToCalendarEvents(items ?? []));
 
   // Hover state for the + icon on date cells
   const hoveredDateRef = useRef<string | null>(null);
 
-  // ── Sync events when campaigns change in store ────────────────────────────
-  // (If your store is reactive, this effect keeps the calendar in sync)
-  // useEffect(() => {
-  //   setEvents(mapToCalendarEvents(campaigns ?? []));
-  // }, [campaigns, mapToCalendarEvents]);
+  // ── Sync events when the source items change ──────────────────────────────
+  useEffect(() => {
+    setEvents(mapToCalendarEvents(items ?? []));
+  }, [items, mapToCalendarEvents]);
 
-  // ── Color helpers (unchanged from original) ───────────────────────────────
-  const getStatusChipSx = (status: CalendarEvent["status"]) => {
-    const map: Record<CalendarEvent["status"], { bg: string; color: string }> = {
-      Completed: { bg: "#dcfce7", color: "#16a34a" },
-      "In Progress": { bg: "#dbeafe", color: "#2563eb" },
-      Upcoming: { bg: "#ede9fe", color: "#7c3aed" },
-      Planning: { bg: "#fef9c3", color: "#ca8a04" },
-      "Follow Up": { bg: "#ffedd5", color: "#ea580c" },
-    };
-    const s = map[status];
-    return { backgroundColor: s.bg, color: s.color, fontWeight: 600, border: "none" };
-  };
-
-  const getPriorityChipSx = (priority: CalendarEvent["priority"]) => {
-    const map: Record<CalendarEvent["priority"], { bg: string; color: string }> = {
-      High: { bg: "#fee2e2", color: "#dc2626" },
-      Medium: { bg: "#fef3c7", color: "#d97706" },
-      Low: { bg: "#dcfce7", color: "#16a34a" },
-    };
-    const p = map[priority];
-    return { backgroundColor: p.bg, color: p.color, fontWeight: 600, border: "none" };
-  };
-
-  const getMilestoneChipSx = (status: Milestone["status"]) => {
-    const map: Record<Milestone["status"], { bg: string; color: string }> = {
-      Completed: { bg: "#1e293b", color: "#fff" },
-      "In Progress": { bg: "#dbeafe", color: "#2563eb" },
-      "Not Started": { bg: "#f1f5f9", color: "#64748b" },
-    };
-    const s = map[status];
-    return { backgroundColor: s.bg, color: s.color, fontWeight: 600, fontSize: "0.7rem" };
-  };
-
-  // ── Event click → open detail modal ──────────────────────────────────────
+  // ── Event click → let the parent open the unified detail dialog ───────────
   const handleEventClick = (info: EventClickArg) => {
-    const ep = info.event.extendedProps as CalendarEvent;
-    setSelectedEvent(info.event);
-    setForm({ ...ep, date: info.event.startStr });
-    setIsModalOpen(true);
-  };
-
-  // ── Save edits ────────────────────────────────────────────────────────────
-  const handleSave = () => {
-    if (!selectedEvent) return;
-    setEvents((prev) =>
-      prev.map((e) => {
-        if (e.id !== selectedEvent.id) return e;
-        const rawDate = form.date ?? e.extendedProps?.date;
-        const eventDateStr = form.eventDate ?? e.extendedProps?.eventDate;
-        let newDate = rawDate;
-        if (eventDateStr) {
-          const parts = eventDateStr.split("-");
-          newDate =
-            parts.length === 3 && parts[2].length === 4
-              ? `${parts[2]}-${parts[1]}-${parts[0]}`
-              : eventDateStr;
-        }
-        return {
-          ...e,
-          title: form.title ?? e.title,
-          start: newDate,
-          end: newDate,
-          extendedProps: { ...e.extendedProps, ...form, date: newDate },
-        };
-      })
-    );
-    setIsModalOpen(false);
-  };
-
-  const handleDelete = () => {
-    if (!selectedEvent) return;
-    setEvents((prev) => prev.filter((e) => e.id !== selectedEvent.id));
-    setIsModalOpen(false);
-  };
-
-  const handleDuplicate = () => {
-    if (!selectedEvent) return;
-    const original = events.find((e) => e.id === selectedEvent.id);
-    if (!original) return;
-    setEvents((prev) => [
-      ...prev,
-      { ...original, id: String(Date.now()), title: `${original.title} (Copy)` },
-    ]);
-    setIsModalOpen(false);
+    onEventClick?.(info.event.id);
   };
 
   const handleEventDrop = (info: EventDropArg) => {
@@ -1065,8 +974,7 @@ const CalendarApp: React.FC<Props> = ({ calendarRef }) => {
 
     btn.addEventListener("click", (ev) => {
       ev.stopPropagation();
-      setDefaultDate(date);
-      setCreateDialogOpen(true);
+      onCreateClick?.(date);
     });
   };
 
@@ -1102,8 +1010,6 @@ const CalendarApp: React.FC<Props> = ({ calendarRef }) => {
       });
     }
   };
-
-  const ep = selectedEvent?.extendedProps as CalendarEvent | undefined;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -1184,13 +1090,6 @@ const CalendarApp: React.FC<Props> = ({ calendarRef }) => {
           }}
         />
       </div>
-
-      {/* ── Create Campaign Dialog ──────────────────────────────────────────── */}
-      <CreateCampaignDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
-        defaultDate={defaultDate}   // pass the clicked date if CreateCampaignDialog accepts it
-      />
     </>
   );
 };

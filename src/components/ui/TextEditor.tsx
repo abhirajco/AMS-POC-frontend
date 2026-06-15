@@ -1,8 +1,8 @@
 import { Lock, LockOpen, TextFields } from "@mui/icons-material";
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import type { EditorOptions } from "@tiptap/core";
 import { useCallback, useRef, useState, useEffect } from "react";
-import { LinkBubbleMenu, MenuButton, RichTextEditor, RichTextReadOnly, TableBubbleMenu, insertImages, type RichTextEditorRef, } from "mui-tiptap";
+import { LinkBubbleMenu, MenuButton, RichTextEditor, TableBubbleMenu, insertImages, type RichTextEditorRef, } from "mui-tiptap";
 import EditorMenuControls from "./EditorMenuControls";
 import useExtensions from "@/hooks/useExtension";
 import FullscreenIcon from '@mui/icons-material/Fullscreen';

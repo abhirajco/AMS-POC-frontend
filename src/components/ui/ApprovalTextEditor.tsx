@@ -1,16 +1,11 @@
-import { Lock, LockOpen, TextFields } from "@mui/icons-material";
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import type { EditorOptions } from "@tiptap/core";
 import { useCallback, useRef, useState, useEffect } from "react";
-import { LinkBubbleMenu, MenuButton, RichTextEditor, RichTextReadOnly, TableBubbleMenu, insertImages, type RichTextEditorRef, } from "mui-tiptap";
+import { LinkBubbleMenu, MenuButton, RichTextEditor, TableBubbleMenu, insertImages, type RichTextEditorRef, } from "mui-tiptap";
 import EditorMenuControls from "./EditorMenuControls";
 import useExtensions from "@/hooks/useExtension";
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
-//import { useEffect } from "react";
-import { BASE_URL } from "@/utils/BASE_URL";
-import { toast } from "sonner";
-import { getCsrfToken } from "@/utils/csrf";
 
 function fileListToImageFiles(fileList: FileList): File[] {
   return Array.from(fileList).filter((file) => {
@@ -25,14 +20,14 @@ type props = {
    onChange: (html: string) => void;
 }
 
-export default function ApprovalTextEditor({ contentTitle, contentBody, contentId, onChange }: props) {
+export default function ApprovalTextEditor({ contentTitle, contentBody, onChange }: props) {
 
   const extensions = useExtensions({
     placeholder: "Start writing your content here, or use AI generated to get started...",
   });
   const rteRef = useRef<RichTextEditorRef>(null);
-  const [isEditable, setIsEditable] = useState(false);
-  const [showMenuBar, setShowMenuBar] = useState(true);
+  const [isEditable] = useState(false);
+  const [showMenuBar] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [title, setTitle] = useState(contentTitle);
 
@@ -40,37 +35,6 @@ export default function ApprovalTextEditor({ contentTitle, contentBody, contentI
     setTitle(contentTitle);
   }, [contentTitle]);
 
-
-  const toggleLock = async () => {
-    if (!contentId) 
-      {
-    console.error("No contentId found");
-    return;
-  }
-    try {
-      const res = await fetch(`${BASE_URL}/content/contents/${contentId}/lock/`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCsrfToken(),
-          },
-        }
-      );
-
-     if (!res.ok) {
-  toast.error("You do not have authority to unlock.");
-  return;
-}
-      const data =await res.json()
-      console.log(data);
-      setIsEditable((prev) => !prev);
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   useEffect(() => {
     if (rteRef.current?.editor && contentBody) {

@@ -6,8 +6,14 @@ import { CalendarIcon, MapPin } from "lucide-react";
 import EditCampaign from "../EditCampaign";
 import { getPriorityBadge } from "@/utils/helpers";
 import { getCEStatusBadge } from "@/utils/helpers";
+import { renderHtmlContent } from "@/utils/helpers";
 
-const AllCampaign = ({ campaigns: campaignsProp }: { campaigns?: any[] } = {}) => {
+const AllCampaign = (
+  { campaigns: campaignsProp, onCampaignClick }: {
+    campaigns?: any[];
+    onCampaignClick?: (campaign: any) => void;
+  } = {}
+) => {
   const campaignsRaw = useCampaign((s: any) => s.campaigns);
   const campaigns = campaignsProp ?? (Array.isArray(campaignsRaw) ? campaignsRaw : []);
   const isLoading = useCampaign((s: any) => s.isLoading);
@@ -15,8 +21,14 @@ const AllCampaign = ({ campaigns: campaignsProp }: { campaigns?: any[] } = {}) =
   const [isEventDetailOpen, setIsEventDetailOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
 
-  const handleCampaignClick = (campaignId: string) => {
-    setSelectedCampaignId(campaignId);
+  // When the parent supplies a click handler it owns the detail dialog
+  // (the unified EventDialog); otherwise fall back to the local EditCampaign.
+  const handleCampaignClick = (campaign: any) => {
+    if (onCampaignClick) {
+      onCampaignClick(campaign);
+      return;
+    }
+    setSelectedCampaignId(campaign.campaign_id);
     setIsEventDetailOpen(true);
   };
 
@@ -29,7 +41,7 @@ const AllCampaign = ({ campaigns: campaignsProp }: { campaigns?: any[] } = {}) =
         <Card
           key={campaign.campaign_id}
           className="bg-white border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => handleCampaignClick(campaign.campaign_id)}>
+          onClick={() => handleCampaignClick(campaign)}>
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
@@ -38,7 +50,7 @@ const AllCampaign = ({ campaigns: campaignsProp }: { campaigns?: any[] } = {}) =
                   {getCEStatusBadge(campaign.status)}
                   {getPriorityBadge(campaign.priority)}
                 </div>
-                <p className="text-sm text-gray-600 mb-3">{campaign.description}</p>
+                <div className="text-sm text-gray-600 mb-3">{renderHtmlContent(campaign.description)}</div>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
                     <CalendarIcon className="w-4 h-4" />
@@ -88,11 +100,13 @@ const AllCampaign = ({ campaigns: campaignsProp }: { campaigns?: any[] } = {}) =
           </CardContent>
         </Card>
       ))}
-      <EditCampaign
-        campaignId={selectedCampaignId}
-        isEventDetailOpen={isEventDetailOpen}
-        setIsEventDetailOpen={setIsEventDetailOpen}
-      />
+      {!onCampaignClick && (
+        <EditCampaign
+          campaignId={selectedCampaignId}
+          isEventDetailOpen={isEventDetailOpen}
+          setIsEventDetailOpen={setIsEventDetailOpen}
+        />
+      )}
     </div>
   )
 };

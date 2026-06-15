@@ -240,8 +240,8 @@ import { Textarea } from "./textarea";
 import { Input } from "./input";
 import { useEffect, useState } from "react";
 import { useCampaign } from "@/store/useCampaign";
-import { Edit, Trash2, Copy } from 'lucide-react';
-import { updateCampaign, deleteCampaign } from "@/api/CampaignHub";
+import { Edit, Trash2 } from 'lucide-react';
+import { deleteCampaign } from "@/api/CampaignHub";
 
 type EditCampaignProps =
     {

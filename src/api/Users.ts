@@ -86,6 +86,73 @@ export const getAllWriter = async () => {
 
 
 
+// Invite a new user:  POST /accounts/invite/
+// payload: { email, full_name, group, role }
+export const inviteUser = async (payload: {
+  email: string;
+  full_name: string;
+  group: string;
+  role: string;
+}) => {
+  try {
+    const res = await fetch(`${BASE_URL}/accounts/invite/`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    let data: any = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = {};
+    }
+
+    if (res.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+      throw new Error("Session expired. Please login again.");
+    }
+
+    if (res.status === 403) {
+      const msg =
+        data?.message || data?.error || data?.detail || "You are not authorized to invite users.";
+      toast.error(msg);
+      throw new Error(msg);
+    }
+
+    if (res.status >= 500) {
+      toast.error("Internal server error. Please try again later.");
+      throw new Error("Internal server error.");
+    }
+
+    if (!res.ok) {
+      const msg =
+        data?.message ||
+        data?.error ||
+        data?.detail ||
+        (Array.isArray(data?.errors)
+          ? data.errors
+              .map((e: any) => (e?.field ? `${e.field}: ${e.message}` : e?.message))
+              .join(" | ")
+          : "Failed to invite user.");
+      toast.error(msg);
+      throw new Error(msg);
+    }
+
+    toast.success(data?.message || "Invitation sent successfully.");
+    return data;
+  } catch (error) {
+    console.error("Invite User Error:", error);
+    throw error;
+  }
+};
+
+
 export const getAllUsers = async () => {
   try {
     const res = await fetch(`${BASE_URL}/accounts/users/all/`, {
@@ -126,3 +193,5 @@ export const getAllUsers = async () => {
     throw error;
   }
 };
+
+
